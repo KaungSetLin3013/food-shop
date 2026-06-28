@@ -6,8 +6,8 @@
 //   • anon public key (long JWT string)
 // ============================================================
 
-const SUPABASE_URL = 'https://YOUR_PROJECT_ID.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_PUBLIC_KEY_HERE';
+const SUPABASE_URL = 'https://kwqbkbcumkkcvametfif.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_cGM5bOHGGJRBuUZX9FA2Vg_pP9aTf4i';
 
 // ============================================================
 // Do NOT edit below this line
