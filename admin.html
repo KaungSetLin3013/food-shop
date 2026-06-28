@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — Festival Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --navy:    #1B2340;
+  --navy2:   #242E50;
+  --navy3:   #2E3C64;
+  --mustard: #F5C842;
+  --coral:   #FF6B5B;
+  --mint:    #4ECDC4;
+  --green:   #4ade80;
+  --text:    #1B2340;
+  --text2:   #4A5480;
+  --text3:   #9AA0C0;
+  --border:  rgba(255,255,255,0.10);
+  --borderL: #E8E2D4;
+  --r-md: 14px; --r-lg: 20px; --r-xl: 28px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:var(--navy);color:#fff;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 10%,rgba(245,200,66,.06),transparent 60%);pointer-events:none;z-index:0}
+button{cursor:pointer;font-family:inherit;border:none}
+input,select,textarea{font-family:inherit}
+
+/* HEADER */
+.hdr{background:rgba(27,35,64,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;gap:12px;flex-wrap:wrap}
+.hdr-title{font-family:'Fredoka',sans-serif;font-size:1.4rem;font-weight:700;color:var(--mustard)}
+.hdr-links{display:flex;gap:8px}
+.hdr-link{background:var(--navy2);border:1px solid var(--border);color:var(--text3);border-radius:8px;padding:8px 14px;font-size:.78rem;font-weight:700;text-decoration:none;transition:all .15s}
+.hdr-link:hover{background:var(--navy3);color:#fff}
+
+/* ADMIN LAYOUT */
+.admin-wrap{max-width:1100px;margin:0 auto;padding:24px 24px 80px;position:relative;z-index:1}
+
+/* TABS */
+.admin-tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap}
+.at{padding:9px 20px;border-radius:8px;background:var(--navy2);border:1.5px solid var(--border);color:var(--text3);font-size:.85rem;font-weight:700;transition:all .15s}
+.at:hover{color:#fff}
+.at.on{background:var(--navy3);color:var(--mustard);border-color:rgba(245,200,66,.3)}
+
+/* PANEL */
+.panel{display:none}
+.panel.on{display:block}
+
+/* CARD */
+.acard{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;box-shadow:var(--shadow)}
+.acard+.acard{margin-top:18px}
+.acard-title{font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:700;color:var(--mustard);margin-bottom:16px}
+.acard-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.acard-head .acard-title{margin-bottom:0}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px}
+.stat-box{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r-md);padding:18px;text-align:center}
+.stat-icon{font-size:1.8rem;margin-bottom:6px}
+.stat-val{font-family:'Fredoka',sans-serif;font-size:1.6rem;font-weight:700;color:var(--mustard)}
+.stat-lbl{font-size:.72rem;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:.875rem}
+.tbl th{padding:8px 12px;text-align:left;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);border-bottom:1px solid var(--border)}
+.tbl td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+.tbl tr:hover td{background:rgba(255,255,255,.03)}
+.tbl-wrap{overflow-x:auto}
+
+.status-pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:800;text-transform:capitalize}
+.status-pill.pending   {background:rgba(245,200,66,.15);color:var(--mustard)}
+.status-pill.preparing {background:rgba(78,205,196,.15);color:var(--mint)}
+.status-pill.ready     {background:rgba(74,222,128,.15);color:var(--green)}
+.status-pill.done      {background:rgba(255,255,255,.07);color:var(--text3)}
+.status-pill.cancelled {background:rgba(255,107,91,.15);color:var(--coral)}
+
+/* ITEM LIST */
+.item-list{display:flex;flex-direction:column;gap:10px}
+.item-row{display:flex;align-items:center;gap:14px;background:var(--navy3);border-radius:var(--r-md);padding:12px 16px}
+.ir-emoji{font-size:1.4rem;flex-shrink:0}
+.ir-info{flex:1;min-width:0}
+.ir-name{font-weight:800;font-size:.9rem;color:#fff}
+.ir-meta{font-size:.77rem;color:var(--text3);margin-top:2px}
+.ir-price{font-family:'Fredoka',sans-serif;font-weight:700;color:var(--mustard);font-size:.95rem;flex-shrink:0}
+.ir-actions{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:8px;font-size:.8rem;font-weight:800;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--mustard);color:var(--navy)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(245,200,66,.35)}
+.btn-danger{background:rgba(255,107,91,.15);color:var(--coral)}
+.btn-danger:hover{background:rgba(255,107,91,.25)}
+.btn-ghost{background:rgba(255,255,255,.07);color:var(--text3)}
+.btn-ghost:hover{background:rgba(255,255,255,.12);color:#fff}
+.btn-mint{background:rgba(78,205,196,.12);color:var(--mint)}
+.btn-mint:hover{background:rgba(78,205,196,.2)}
+.btn-edit{background:rgba(245,200,66,.12);color:var(--mustard)}
+.btn-edit:hover{background:rgba(245,200,66,.22)}
+.btn-sm{padding:6px 12px;font-size:.75rem}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-size:.75rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.05em}
+.fld input,.fld select,.fld textarea{padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--navy3);color:#fff;font-size:.9rem;transition:border-color .15s;width:100%}
+.fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--mustard);box-shadow:0 0 0 3px rgba(245,200,66,.12)}
+.fld select option{background:var(--navy)}
+.fld textarea{resize:vertical;min-height:64px}
+.fld-full{grid-column:1/-1}
+.check-label{display:flex;align-items:center;gap:8px;font-size:.875rem;color:var(--text3);font-weight:700;cursor:pointer;grid-column:1/-1}
+.check-label input{width:16px;height:16px;accent-color:var(--mustard);cursor:pointer}
+
+/* STATUS SELECT inline */
+.status-sel{padding:6px 10px;border-radius:8px;background:var(--navy3);color:#fff;border:1px solid var(--border);font-size:.78rem;font-family:'Nunito',sans-serif;cursor:pointer}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:800;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r-xl);padding:28px;width:100%;max-width:500px;max-height:90dvh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.5);animation:popIn .22s ease}
+@keyframes popIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-family:'Fredoka',sans-serif;font-size:1.2rem;font-weight:700;color:var(--mustard)}
+.modal-close{background:rgba(255,255,255,.08);color:var(--text3);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.modal-close:hover{background:rgba(255,255,255,.15);color:#fff}
+.modal-body{display:flex;flex-direction:column;gap:12px}
+.modal-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 20px;color:var(--text3);grid-column:1/-1}
+.empty .big{font-size:3rem;margin-bottom:10px}
+.empty p{font-weight:700;color:rgba(255,255,255,.3)}
+
+/* LOADER */
+.spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--mustard);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SEARCH */
+.search-bar{position:relative;flex:1;min-width:160px}
+.search-bar input{width:100%;padding:8px 12px 8px 34px;border-radius:8px;border:1px solid var(--border);background:var(--navy3);color:#fff;font-size:.85rem}
+.search-bar input:focus{outline:none;border-color:var(--mustard)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:.85rem;pointer-events:none}
+
+@media(max-width:640px){
+  .form-grid{grid-template-columns:1fr}
+  .fld-full{grid-column:1}
+  .check-label{grid-column:1}
+  .admin-tabs{gap:4px}
+  .at{padding:7px 12px;font-size:.78rem}
+  .hdr{padding:12px 16px}
+  .admin-wrap{padding:16px 16px 60px}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-title">⚙️ Admin Panel</div>
+  <div class="hdr-links">
+    <a class="hdr-link" href="index.html">🛍 Shop</a>
+    <a class="hdr-link" href="kitchen.html">👨‍🍳 Kitchen</a>
+  </div>
+</header>
+
+<div class="admin-wrap">
+  <div class="admin-tabs">
+    <button class="at on" data-panel="p-dashboard">📊 Dashboard</button>
+    <button class="at" data-panel="p-orders">📋 Orders</button>
+    <button class="at" data-panel="p-menu">🍽 Menu Items</button>
+    <button class="at" data-panel="p-categories">🗂 Categories</button>
+    <button class="at" data-panel="p-settings">⚙️ Settings</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="panel on" id="p-dashboard">
+    <div class="stats-grid" id="stats"></div>
+    <div class="acard">
+      <div class="acard-title">Recent Orders</div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Customer</th><th>Table</th><th>Total</th><th>Status</th><th>Time</th></tr></thead>
+          <tbody id="dash-orders"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="panel" id="p-orders">
+    <div class="acard">
+      <div class="acard-head">
+        <div class="acard-title">All Orders</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select class="status-sel" id="orders-filter" onchange="loadOrders()">
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="preparing">Preparing</option>
+            <option value="ready">Ready</option>
+            <option value="done">Done</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+          <button class="btn btn-danger btn-sm" onclick="confirmClearOrders()">Clear All</button>
+        </div>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>#</th><th>Customer</th><th>Table</th><th>Items</th><th>Total</th><th>Status</th><th>Time</th><th>Action</th></tr></thead>
+          <tbody id="orders-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MENU ITEMS -->
+  <div class="panel" id="p-menu">
+    <div class="acard">
+      <div class="acard-head">
+        <div class="acard-title">Menu Items</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="menu-search" placeholder="Search items…" oninput="renderMenuItems()" />
+          </div>
+          <button class="btn btn-primary" onclick="openItemModal(null)">+ Add Item</button>
+        </div>
+      </div>
+      <div class="item-list" id="menu-list"></div>
+    </div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div class="panel" id="p-categories">
+    <div class="acard">
+      <div class="acard-head">
+        <div class="acard-title">Categories</div>
+        <button class="btn btn-primary" onclick="openCatModal(null)">+ Add Category</button>
+      </div>
+      <div class="item-list" id="cat-list"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="panel" id="p-settings">
+    <div class="acard">
+      <div class="acard-title">Shop Settings</div>
+      <div class="modal-body" style="gap:14px">
+        <div class="form-grid">
+          <div class="fld"><label>Shop Name</label><input id="s-name" placeholder="Festival Shop" /></div>
+          <div class="fld"><label>Tagline</label><input id="s-tag" placeholder="School Festival 2025" /></div>
+          <div class="fld"><label>Logo Emoji</label><input id="s-emoji" placeholder="🎪" maxlength="4" /></div>
+          <div class="fld"><label>Currency Symbol</label><input id="s-currency" placeholder="¥" maxlength="4" /></div>
+          <div class="fld"><label>Tax / Service (%)</label><input id="s-tax" type="number" min="0" max="100" step="0.1" placeholder="0" /></div>
+          <div class="fld"><label>Receipt Message</label><input id="s-receipt" placeholder="Thank you! 🎉" /></div>
+        </div>
+        <div style="margin-top:6px">
+          <button class="btn btn-primary" onclick="saveSettings()">💾 Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <div class="modal-hd">
+      <span class="modal-title" id="modal-title"></span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot" id="modal-foot"></div>
+  </div>
+</div>
+
+<div id="toast-area" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none"></div>
+
+<script type="module">
+import { sb, getSettings, saveSetting, fmt, timeAgo, esc, toast } from './supabase-config.js';
+
+// ── State ──────────────────────────────────────────────────
+let settings   = {};
+let categories = [];
+let menuItems  = [];
+let orders     = [];
+
+// ── Boot ───────────────────────────────────────────────────
+async function boot() {
+  settings = await getSettings();
+  loadSettingsForm();
+
+  const [{ data: cats }, { data: items }] = await Promise.all([
+    sb.from('categories').select('*').order('sort_order'),
+    sb.from('menu_items').select('*,categories(name)').order('created_at'),
+  ]);
+  categories = cats  || [];
+  menuItems  = items || [];
+
+  await loadOrders();
+  renderDashboard();
+  renderMenuItems();
+  renderCategories();
+  subscribeRealtime();
+}
+boot();
+
+// ── Tab switching ──────────────────────────────────────────
+document.querySelectorAll('.at').forEach(btn =>
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.at').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+    btn.classList.add('on');
+    document.getElementById(btn.dataset.panel).classList.add('on');
+    if (btn.dataset.panel === 'p-orders') loadOrders().then(renderOrders);
+  })
+);
+
+// ── Realtime ───────────────────────────────────────────────
+function subscribeRealtime() {
+  sb.channel('admin-orders')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, async () => {
+      await loadOrders();
+      renderDashboard();
+      renderOrders();
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, async () => {
+      await loadOrders();
+      renderDashboard();
+      renderOrders();
+    })
+    .subscribe();
+}
+
+// ── Dashboard ──────────────────────────────────────────────
+function renderDashboard() {
+  const today = new Date().toDateString();
+  const todayOrders = orders.filter(o => new Date(o.created_at).toDateString() === today);
+  const revenue     = orders.filter(o => o.status === 'done').reduce((s, o) => s + Number(o.total), 0);
+  const pending     = orders.filter(o => o.status === 'pending').length;
+  const sym         = settings.currency || '¥';
+
+  document.getElementById('stats').innerHTML = [
+    { icon: '📋', val: orders.length,            lbl: 'Total Orders' },
+    { icon: '⏳', val: pending,                  lbl: 'Pending' },
+    { icon: '💰', val: fmt(revenue, sym),        lbl: 'Revenue (done)' },
+    { icon: '📅', val: todayOrders.length,       lbl: 'Today' },
+  ].map(s => `
+    <div class="stat-box">
+      <div class="stat-icon">${s.icon}</div>
+      <div class="stat-val">${s.val}</div>
+      <div class="stat-lbl">${s.lbl}</div>
+    </div>
+  `).join('');
+
+  const tbody = document.getElementById('dash-orders');
+  const recent = orders.slice(0, 10);
+  if (!recent.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3)">No orders yet</td></tr>'; return; }
+  tbody.innerHTML = recent.map(o => `
+    <tr>
+      <td><b>#${String(o.order_number).padStart(4,'0')}</b></td>
+      <td>${esc(o.customer)}</td>
+      <td>${esc(o.table_num||'—')}</td>
+      <td style="font-family:'Fredoka',sans-serif;color:var(--mustard)">${fmt(o.total, sym)}</td>
+      <td><span class="status-pill ${o.status}">${o.status}</span></td>
+      <td style="color:var(--text3);font-size:.78rem">${timeAgo(o.created_at)}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Orders ─────────────────────────────────────────────────
+window.loadOrders = async function() {
+  const filter = document.getElementById('orders-filter')?.value;
+  let query = sb.from('orders')
+    .select('*, order_items(item_name, item_emoji, quantity)')
+    .order('created_at', { ascending: false })
+    .limit(200);
+  if (filter) query = query.eq('status', filter);
+  const { data, error } = await query;
+  if (!error) orders = data || [];
+  renderOrders();
+}
+
+function renderOrders() {
+  const sym   = settings.currency || '¥';
+  const tbody = document.getElementById('orders-body');
+  if (!tbody) return;
+  if (!orders.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--text3)">No orders found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = orders.map(o => `
+    <tr>
+      <td><b>#${String(o.order_number).padStart(4,'0')}</b></td>
+      <td>${esc(o.customer)}</td>
+      <td>${esc(o.table_num||'—')}</td>
+      <td style="font-size:.78rem;color:var(--text3)">${(o.order_items||[]).map(i => `${i.quantity}× ${esc(i.item_name)}`).join(', ')}</td>
+      <td style="font-family:'Fredoka',sans-serif;color:var(--mustard)">${fmt(o.total, sym)}</td>
+      <td><span class="status-pill ${o.status}">${o.status}</span></td>
+      <td style="color:var(--text3);font-size:.78rem">${timeAgo(o.created_at)}</td>
+      <td>
+        <select class="status-sel" onchange="updateOrderStatus('${o.id}', this.value)">
+          ${['pending','preparing','ready','done','cancelled'].map(s =>
+            `<option value="${s}" ${o.status===s?'selected':''}>${s}</option>`
+          ).join('')}
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+
+window.updateOrderStatus = async function(id, status) {
+  const { error } = await sb.from('orders').update({ status }).eq('id', id);
+  if (error) toast('Error: ' + error.message, 'error');
+  else { toast('Status updated', 'success'); await loadOrders(); renderDashboard(); }
+}
+
+window.confirmClearOrders = async function() {
+  showConfirm('Delete ALL orders? This cannot be undone.', async () => {
+    const { error } = await sb.from('order_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (!error) await sb.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    await loadOrders();
+    renderDashboard();
+    toast('All orders cleared', 'success');
+  });
+}
+
+// ── Menu Items ─────────────────────────────────────────────
+window.renderMenuItems = function() {
+  const search = document.getElementById('menu-search')?.value?.toLowerCase() || '';
+  const sym    = settings.currency || '¥';
+  const list   = document.getElementById('menu-list');
+  let filtered = menuItems;
+  if (search) filtered = menuItems.filter(i => i.name.toLowerCase().includes(search) || (i.description||'').toLowerCase().includes(search));
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty"><div class="big">🍽</div><p>No items found</p></div>`;
+    return;
+  }
+  list.innerHTML = filtered.map(it => {
+    const cat = categories.find(c => c.id === it.category_id);
+    return `
+      <div class="item-row">
+        <div class="ir-emoji">${esc(it.emoji||'🍽')}</div>
+        <div class="ir-info">
+          <div class="ir-name">${esc(it.name)}</div>
+          <div class="ir-meta">${cat ? esc(cat.name) : '—'} · ${it.available ? '✅ Available' : '🚫 Hidden'}</div>
+        </div>
+        <div class="ir-price">${fmt(it.price, sym)}</div>
+        <div class="ir-actions">
+          <button class="btn btn-mint btn-sm" onclick="toggleAvail('${it.id}', ${it.available})">${it.available ? 'Disable' : 'Enable'}</button>
+          <button class="btn btn-edit btn-sm" onclick="openItemModal('${it.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('${it.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+window.openItemModal = function(id) {
+  const it = id ? menuItems.find(x => x.id === id) : null;
+  const catOpts = categories.map(c =>
+    `<option value="${c.id}" ${it?.category_id===c.id?'selected':''}>${esc(c.name)}</option>`
+  ).join('');
+
+  openModal(it ? 'Edit Item' : 'Add Item', `
+    <div class="form-grid">
+      <div class="fld"><label>Name *</label><input id="mi-name" value="${esc(it?.name||'')}" placeholder="Ramen Bowl" maxlength="60" /></div>
+      <div class="fld"><label>Emoji</label><input id="mi-emoji" value="${esc(it?.emoji||'')}" placeholder="🍜" maxlength="4" /></div>
+      <div class="fld fld-full"><label>Description</label><textarea id="mi-desc" placeholder="Short description…" maxlength="160">${esc(it?.description||'')}</textarea></div>
+      <div class="fld"><label>Price (${settings.currency||'¥'}) *</label><input id="mi-price" type="number" value="${it?.price||''}" min="0" step="1" /></div>
+      <div class="fld"><label>Category</label><select id="mi-cat"><option value="">— none —</option>${catOpts}</select></div>
+      <label class="check-label"><input type="checkbox" id="mi-avail" ${!it||it.available?'checked':''} /> Available for ordering</label>
+    </div>
+  `, [
+    { label: it ? 'Save Changes' : 'Add Item', cls: 'btn-primary', action: async () => {
+      const name  = document.getElementById('mi-name').value.trim();
+      const price = parseFloat(document.getElementById('mi-price').value);
+      if (!name)       { toast('Name is required', 'error'); return false; }
+      if (isNaN(price)){ toast('Valid price is required', 'error'); return false; }
+      const payload = {
+        name,
+        emoji:       document.getElementById('mi-emoji').value.trim() || '🍽',
+        description: document.getElementById('mi-desc').value.trim() || null,
+        price,
+        category_id: document.getElementById('mi-cat').value || null,
+        available:   document.getElementById('mi-avail').checked,
+      };
+      const { data, error } = it
+        ? await sb.from('menu_items').update(payload).eq('id', it.id).select('*,categories(name)').single()
+        : await sb.from('menu_items').insert(payload).select('*,categories(name)').single();
+      if (error) { toast('Error: ' + error.message, 'error'); return false; }
+      if (it) menuItems = menuItems.map(x => x.id === it.id ? data : x);
+      else    menuItems.unshift(data);
+      renderMenuItems();
+      toast(it ? 'Item updated!' : 'Item added!', 'success');
+    }},
+    { label: 'Cancel', cls: 'btn-ghost', action: null },
+  ]);
+}
+
+window.toggleAvail = async function(id, current) {
+  const { data, error } = await sb.from('menu_items').update({ available: !current }).eq('id', id).select('*,categories(name)').single();
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  menuItems = menuItems.map(x => x.id === id ? data : x);
+  renderMenuItems();
+  toast(!current ? 'Item enabled' : 'Item disabled', 'success');
+}
+
+window.deleteItem = function(id) {
+  showConfirm('Delete this menu item?', async () => {
+    const { error } = await sb.from('menu_items').delete().eq('id', id);
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    menuItems = menuItems.filter(x => x.id !== id);
+    renderMenuItems();
+    toast('Item deleted', 'success');
+  });
+}
+
+// ── Categories ─────────────────────────────────────────────
+function renderCategories() {
+  const list = document.getElementById('cat-list');
+  if (!categories.length) {
+    list.innerHTML = `<div class="empty"><div class="big">🗂</div><p>No categories yet</p></div>`;
+    return;
+  }
+  list.innerHTML = categories.map(c => `
+    <div class="item-row">
+      <div class="ir-info"><div class="ir-name">${esc(c.name)}</div><div class="ir-meta">Sort: ${c.sort_order}</div></div>
+      <div class="ir-actions">
+        <button class="btn btn-edit btn-sm" onclick="openCatModal('${c.id}')">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCat('${c.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.openCatModal = function(id) {
+  const cat = id ? categories.find(c => c.id === id) : null;
+  openModal(cat ? 'Edit Category' : 'Add Category', `
+    <div class="form-grid">
+      <div class="fld fld-full"><label>Name * (include emoji!)</label><input id="cat-name" value="${esc(cat?.name||'')}" placeholder="🍜 Noodles" maxlength="40" /></div>
+      <div class="fld"><label>Sort Order</label><input id="cat-order" type="number" value="${cat?.sort_order||0}" min="0" /></div>
+    </div>
+  `, [
+    { label: cat ? 'Save' : 'Add', cls: 'btn-primary', action: async () => {
+      const name  = document.getElementById('cat-name').value.trim();
+      const order = parseInt(document.getElementById('cat-order').value) || 0;
+      if (!name) { toast('Name is required', 'error'); return false; }
+      const { data, error } = cat
+        ? await sb.from('categories').update({ name, sort_order: order }).eq('id', cat.id).select().single()
+        : await sb.from('categories').insert({ name, sort_order: order }).select().single();
+      if (error) { toast('Error: ' + error.message, 'error'); return false; }
+      if (cat) categories = categories.map(c => c.id === cat.id ? data : c);
+      else     categories.push(data);
+      renderCategories();
+      toast(cat ? 'Category updated' : 'Category added', 'success');
+    }},
+    { label: 'Cancel', cls: 'btn-ghost', action: null },
+  ]);
+}
+
+window.deleteCat = function(id) {
+  showConfirm('Delete this category? Items will become uncategorized.', async () => {
+    const { error } = await sb.from('categories').delete().eq('id', id);
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    categories = categories.filter(c => c.id !== id);
+    renderCategories();
+    toast('Category deleted', 'success');
+  });
+}
+
+// ── Settings ───────────────────────────────────────────────
+function loadSettingsForm() {
+  document.getElementById('s-name').value    = settings.shop_name   || '';
+  document.getElementById('s-tag').value     = settings.tagline     || '';
+  document.getElementById('s-emoji').value   = settings.emoji       || '🎪';
+  document.getElementById('s-currency').value= settings.currency    || '¥';
+  document.getElementById('s-tax').value     = settings.tax         || '0';
+  document.getElementById('s-receipt').value = settings.receipt_msg || '';
+}
+
+window.saveSettings = async function() {
+  const updates = {
+    shop_name:   document.getElementById('s-name').value.trim()    || 'Festival Shop',
+    tagline:     document.getElementById('s-tag').value.trim(),
+    emoji:       document.getElementById('s-emoji').value.trim()   || '🎪',
+    currency:    document.getElementById('s-currency').value.trim()|| '¥',
+    tax:         document.getElementById('s-tax').value            || '0',
+    receipt_msg: document.getElementById('s-receipt').value.trim(),
+  };
+  for (const [key, value] of Object.entries(updates)) {
+    await saveSetting(key, value);
+  }
+  settings = { ...settings, ...updates };
+  toast('Settings saved! 🎉', 'success');
+}
+
+// ── Modal helpers ──────────────────────────────────────────
+function openModal(title, bodyHTML, buttons) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHTML;
+  document.getElementById('modal-foot').innerHTML = buttons.map((b, i) =>
+    `<button class="btn ${b.cls}" data-idx="${i}">${esc(b.label)}</button>`
+  ).join('');
+  document.querySelectorAll('#modal-foot [data-idx]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const result = await buttons[parseInt(btn.dataset.idx)].action?.();
+      if (result !== false) closeModal();
+    });
+  });
+  document.getElementById('modal-bg').classList.add('open');
+  setTimeout(() => document.querySelector('#modal-body input')?.focus(), 80);
+}
+
+window.closeModal = function() {
+  document.getElementById('modal-bg').classList.remove('open');
+}
+
+document.getElementById('modal-bg').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-bg')) closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function showConfirm(msg, onConfirm) {
+  openModal('Confirm', `<p style="color:var(--text3);line-height:1.6">${esc(msg)}</p>`, [
+    { label: 'Cancel',  cls: 'btn-ghost',  action: null },
+    { label: 'Confirm', cls: 'btn-danger', action: onConfirm },
+  ]);
+}
+
+// ── Make functions globally accessible ─────────────────────
+window.loadOrders      = window.loadOrders;
+window.renderMenuItems = window.renderMenuItems;
+</script>
+</body>
+</html>

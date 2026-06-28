@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kitchen Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --navy:    #1B2340;
+  --navy2:   #242E50;
+  --navy3:   #2E3C64;
+  --mustard: #F5C842;
+  --coral:   #FF6B5B;
+  --mint:    #4ECDC4;
+  --green:   #4ade80;
+  --text3:   #9AA0C0;
+  --border:  rgba(255,255,255,0.10);
+  --r-md: 14px; --r-lg: 20px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;background:var(--navy);color:#fff;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 10%,rgba(245,200,66,.06),transparent 60%),radial-gradient(ellipse 50% 60% at 10% 80%,rgba(78,205,196,.05),transparent 55%);pointer-events:none;z-index:0}
+button{cursor:pointer;font-family:inherit;border:none}
+
+/* HEADER */
+.hdr{background:rgba(27,35,64,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;gap:16px;flex-wrap:wrap}
+.hdr-left{display:flex;align-items:center;gap:14px}
+.hdr-title{font-family:'Fredoka',sans-serif;font-size:1.5rem;font-weight:700}
+.hdr-title span{color:var(--mustard)}
+.live-dot{width:10px;height:10px;background:var(--green);border-radius:50%;box-shadow:0 0 0 3px rgba(74,222,128,.25);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(74,222,128,.25)}50%{box-shadow:0 0 0 6px rgba(74,222,128,.1)}}
+.hdr-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hdr-link{background:var(--navy2);border:1px solid var(--border);color:var(--text3);border-radius:8px;padding:8px 14px;font-size:.78rem;font-weight:700;text-decoration:none;transition:all .15s}
+.hdr-link:hover{background:var(--navy3);color:#fff}
+.last-update{font-size:.75rem;color:var(--text3);font-weight:700}
+
+/* FILTERS */
+.filters-bar{padding:18px 24px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+.kf{padding:8px 18px;border-radius:99px;background:var(--navy2);border:1.5px solid var(--border);color:var(--text3);font-size:.82rem;font-weight:700;transition:all .15s}
+.kf:hover{border-color:rgba(245,200,66,.4);color:var(--mustard)}
+.kf.on{background:var(--mustard);border-color:var(--mustard);color:var(--navy)}
+.order-count{margin-left:auto;font-size:.82rem;color:var(--text3);font-weight:700}
+
+/* GRID */
+.kitchen-wrap{padding:18px 24px 80px;position:relative;z-index:1}
+.kitchen-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+
+/* ORDER CARD */
+.ocard{background:var(--navy2);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow);animation:slideUp .3s ease;border-top:3px solid transparent;position:relative;overflow:hidden}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.ocard[data-status="pending"]   {border-top-color:var(--mustard)}
+.ocard[data-status="preparing"] {border-top-color:var(--mint)}
+.ocard[data-status="ready"]     {border-top-color:var(--green)}
+.ocard[data-status="done"]      {border-top-color:var(--text3);opacity:.6}
+.ocard[data-status="cancelled"] {border-top-color:var(--coral);opacity:.5}
+
+/* elapsed warning glow */
+.ocard.urgent{box-shadow:var(--shadow),0 0 0 2px rgba(255,107,91,.4)}
+
+.oc-head{display:flex;justify-content:space-between;align-items:flex-start}
+.oc-num{font-family:'Fredoka',sans-serif;font-size:1.25rem;font-weight:700;color:var(--mustard)}
+.oc-customer{font-size:.85rem;color:var(--text3);margin-top:2px}
+.oc-table{font-size:.78rem;color:var(--text3)}
+.oc-meta{text-align:right}
+.status-pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:800;text-transform:capitalize}
+.status-pill.pending   {background:rgba(245,200,66,.15);color:var(--mustard)}
+.status-pill.preparing {background:rgba(78,205,196,.15);color:var(--mint)}
+.status-pill.ready     {background:rgba(74,222,128,.15);color:var(--green)}
+.status-pill.done      {background:rgba(255,255,255,.07);color:var(--text3)}
+.status-pill.cancelled {background:rgba(255,107,91,.15);color:var(--coral)}
+.oc-time{font-size:.73rem;color:var(--text3);margin-top:4px}
+.oc-time.warn{color:var(--coral);font-weight:700}
+
+.oc-items{display:flex;flex-direction:column;gap:8px}
+.oc-item{display:flex;align-items:center;gap:10px;font-size:.875rem}
+.oc-qty{background:var(--coral);color:#fff;border-radius:6px;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;flex-shrink:0}
+.oc-name{color:#fff;font-weight:700}
+.oc-notes{background:rgba(245,200,66,.1);border-left:3px solid var(--mustard);padding:8px 12px;border-radius:0 8px 8px 0;font-size:.8rem;color:var(--mustard)}
+
+.oc-btns{display:flex;gap:6px;flex-wrap:wrap}
+.sb{flex:1;min-width:0;padding:9px 6px;border-radius:8px;font-size:.75rem;font-weight:800;text-align:center;transition:all .15s;border:1.5px solid transparent}
+.sb.pending-sb   {background:rgba(245,200,66,.12);color:var(--mustard);border-color:rgba(245,200,66,.25)}
+.sb.preparing-sb {background:rgba(78,205,196,.12);color:var(--mint);border-color:rgba(78,205,196,.25)}
+.sb.ready-sb     {background:rgba(74,222,128,.12);color:var(--green);border-color:rgba(74,222,128,.25)}
+.sb.done-sb      {background:rgba(255,255,255,.07);color:var(--text3);border-color:var(--border)}
+.sb.current{opacity:.35;cursor:default}
+.sb:not(.current):hover{transform:translateY(-1px);filter:brightness(1.2)}
+
+/* EMPTY */
+.empty-kitchen{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:80px 20px;color:var(--text3);text-align:center;grid-column:1/-1}
+.empty-kitchen .big{font-size:4rem}
+.empty-kitchen h3{font-family:'Fredoka',sans-serif;font-size:1.4rem;font-weight:700;color:rgba(255,255,255,.3)}
+
+/* NEW ORDER FLASH */
+.new-flash{position:fixed;top:80px;right:20px;z-index:500;background:var(--green);color:var(--navy);padding:12px 20px;border-radius:var(--r-md);font-weight:800;font-size:.9rem;box-shadow:0 4px 20px rgba(74,222,128,.4);animation:flashIn .3s ease}
+@keyframes flashIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* LOADER */
+.loader{display:flex;align-items:center;justify-content:center;padding:80px;grid-column:1/-1}
+.spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--mustard);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:640px){
+  .kitchen-grid{grid-template-columns:1fr}
+  .hdr{padding:12px 16px}
+  .kitchen-wrap{padding:14px 16px 60px}
+  .filters-bar{padding:14px 16px 0}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-left">
+    <div class="live-dot"></div>
+    <div class="hdr-title">👨‍🍳 Kitchen <span>Display</span></div>
+  </div>
+  <div class="hdr-right">
+    <span class="last-update" id="last-update">Connecting…</span>
+    <a class="hdr-link" href="index.html">🛍 Shop</a>
+    <a class="hdr-link" href="admin.html">⚙️ Admin</a>
+  </div>
+</header>
+
+<div class="filters-bar">
+  <button class="kf on" data-f="active">Active</button>
+  <button class="kf" data-f="all">All</button>
+  <button class="kf" data-f="pending">Pending</button>
+  <button class="kf" data-f="preparing">Preparing</button>
+  <button class="kf" data-f="ready">Ready</button>
+  <span class="order-count" id="order-count"></span>
+</div>
+
+<div class="kitchen-wrap">
+  <div class="kitchen-grid" id="kitchen-grid">
+    <div class="loader"><div class="spin"></div></div>
+  </div>
+</div>
+
+<div id="toast-area" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none"></div>
+
+<script type="module">
+import { sb, timeAgo, esc, toast } from './supabase-config.js';
+
+// ── State ──────────────────────────────────────────────────
+let orders     = [];
+let activeFilter = 'active';
+
+// ── Boot ───────────────────────────────────────────────────
+async function boot() {
+  await loadOrders();
+  subscribeRealtime();
+  // refresh elapsed times every 30s
+  setInterval(() => renderGrid(), 30000);
+}
+boot();
+
+// ── Load Orders ────────────────────────────────────────────
+async function loadOrders() {
+  const { data, error } = await sb
+    .from('orders')
+    .select('*, order_items(item_name, item_emoji, quantity)')
+    .order('created_at', { ascending: false })
+    .limit(150);
+
+  if (error) { toast('Failed to load orders: ' + error.message, 'error'); return; }
+  orders = data || [];
+  renderGrid();
+  updateLastUpdate();
+}
+
+// ── Realtime ───────────────────────────────────────────────
+function subscribeRealtime() {
+  sb.channel('kitchen-orders')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, async payload => {
+      // Fetch the full order with items
+      const { data } = await sb
+        .from('orders')
+        .select('*, order_items(item_name, item_emoji, quantity)')
+        .eq('id', payload.new.id)
+        .single();
+      if (data) {
+        orders.unshift(data);
+        renderGrid();
+        flashNewOrder(data);
+        updateLastUpdate();
+      }
+    })
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
+      const idx = orders.findIndex(o => o.id === payload.new.id);
+      if (idx !== -1) {
+        orders[idx] = { ...orders[idx], ...payload.new };
+        renderGrid();
+        updateLastUpdate();
+      }
+    })
+    .subscribe();
+}
+
+function flashNewOrder(order) {
+  const el = document.createElement('div');
+  el.className = 'new-flash';
+  el.textContent = `🔔 New order #${String(order.order_number).padStart(4,'0')} — ${order.customer}`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+  // Play a beep if allowed
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = 'sine'; osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.start(); osc.stop(ctx.currentTime + 0.4);
+  } catch {}
+}
+
+function updateLastUpdate() {
+  document.getElementById('last-update').textContent = 'Updated ' + new Date().toLocaleTimeString();
+}
+
+// ── Filter ─────────────────────────────────────────────────
+document.querySelectorAll('.kf').forEach(btn =>
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.kf').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    activeFilter = btn.dataset.f;
+    renderGrid();
+  })
+);
+
+function filtered() {
+  if (activeFilter === 'active')
+    return orders.filter(o => ['pending','preparing','ready'].includes(o.status));
+  if (activeFilter === 'all') return orders;
+  return orders.filter(o => o.status === activeFilter);
+}
+
+// ── Render Grid ────────────────────────────────────────────
+function renderGrid() {
+  const grid = document.getElementById('kitchen-grid');
+  const list = filtered();
+
+  document.getElementById('order-count').textContent =
+    list.length + ' order' + (list.length !== 1 ? 's' : '');
+
+  if (!list.length) {
+    grid.innerHTML = `
+      <div class="empty-kitchen">
+        <div class="big">👨‍🍳</div>
+        <h3>${activeFilter === 'active' ? 'All caught up!' : 'No orders here'}</h3>
+        <p style="font-size:.85rem">Orders will appear here in real time</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(o => buildCard(o)).join('');
+
+  // Wire status buttons
+  grid.querySelectorAll('.sb:not(.current)').forEach(btn =>
+    btn.addEventListener('click', () => setStatus(btn.dataset.id, btn.dataset.s))
+  );
+}
+
+function buildCard(o) {
+  const elapsed = Math.floor((Date.now() - new Date(o.created_at)) / 60000);
+  const urgent  = elapsed > 15 && ['pending','preparing'].includes(o.status);
+  const items   = o.order_items || [];
+
+  const statuses = [
+    { key: 'pending',   label: '⏳ Pending'  },
+    { key: 'preparing', label: '🔥 Preparing' },
+    { key: 'ready',     label: '✅ Ready'    },
+    { key: 'done',      label: '📦 Done'     },
+  ];
+
+  return `
+    <div class="ocard ${urgent ? 'urgent' : ''}" data-status="${o.status}" id="oc-${o.id}">
+      <div class="oc-head">
+        <div>
+          <div class="oc-num">#${String(o.order_number).padStart(4,'0')}</div>
+          <div class="oc-customer">👤 ${esc(o.customer)}</div>
+          ${o.table_num ? `<div class="oc-table">🪑 ${esc(o.table_num)}</div>` : ''}
+        </div>
+        <div class="oc-meta">
+          <div class="status-pill ${o.status}">${o.status}</div>
+          <div class="oc-time ${urgent ? 'warn' : ''}">⏱ ${elapsed}m ago${urgent ? ' ⚠️' : ''}</div>
+        </div>
+      </div>
+
+      <div class="oc-items">
+        ${items.map(i => `
+          <div class="oc-item">
+            <span class="oc-qty">${i.quantity}</span>
+            <span style="font-size:1.2rem">${esc(i.item_emoji || '🍽')}</span>
+            <span class="oc-name">${esc(i.item_name)}</span>
+          </div>
+        `).join('')}
+      </div>
+
+      ${o.notes ? `<div class="oc-notes">📝 ${esc(o.notes)}</div>` : ''}
+
+      <div class="oc-btns">
+        ${statuses.map(s => `
+          <button class="sb ${s.key}-sb ${o.status === s.key ? 'current' : ''}"
+            data-id="${o.id}" data-s="${s.key}"
+            ${o.status === s.key ? 'disabled' : ''}>
+            ${s.label}
+          </button>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+// ── Set Status ─────────────────────────────────────────────
+async function setStatus(orderId, status) {
+  const { error } = await sb
+    .from('orders')
+    .update({ status })
+    .eq('id', orderId);
+
+  if (error) { toast('Failed: ' + error.message, 'error'); return; }
+
+  // Optimistically update local state
+  const idx = orders.findIndex(o => o.id === orderId);
+  if (idx !== -1) orders[idx].status = status;
+  renderGrid();
+  toast(`Order marked: ${status}`, 'success');
+}
+</script>
+</body>
+</html>
