@@ -1,174 +1,675 @@
--- ============================================================
--- FESTIVAL SHOP v2 — Supabase Schema
--- Run this in Supabase > SQL Editor > Run
--- ============================================================
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Festival Shop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#1B2340;--navy2:#242E50;--navy3:#2E3C64;
+  --mustard:#F5C842;--coral:#FF6B5B;--mint:#4ECDC4;--green:#4ade80;
+  --text:#1B2340;--text2:#4A5480;--text3:#9AA0C0;
+  --border:rgba(255,255,255,.10);--borderL:#E8E2D4;
+  --r:14px;--r2:20px;--r3:28px;
+  --sh:0 4px 20px rgba(0,0,0,.25);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',sans-serif;background:var(--navy);color:#fff;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 10%,rgba(245,200,66,.07),transparent 60%),radial-gradient(ellipse 50% 60% at 10% 80%,rgba(78,205,196,.05),transparent 55%);pointer-events:none;z-index:0}
+button{cursor:pointer;font-family:inherit;border:none}
 
--- 1. SETTINGS
-create table if not exists settings (
-  key   text primary key,
-  value text
-);
+/* ── TABLE GATE ─────────────────────────────────────────── */
+#gate{position:fixed;inset:0;background:var(--navy);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px}
+#gate::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 40%,rgba(245,200,66,.09),transparent 65%)}
+.gate-box{position:relative;z-index:1;text-align:center;max-width:400px;width:100%}
+.gate-emoji{font-size:4rem;margin-bottom:16px;display:block}
+.gate-title{font-family:'Fredoka',sans-serif;font-size:2.2rem;font-weight:700;color:var(--mustard);margin-bottom:8px}
+.gate-sub{color:var(--text3);font-size:.9rem;margin-bottom:32px}
+.gate-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r3);padding:32px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.gate-label{font-size:.78rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:10px;text-align:left}
+.gate-input{width:100%;padding:14px 18px;border:2px solid var(--border);border-radius:var(--r);background:var(--navy3);color:#fff;font-size:1.1rem;font-family:'Fredoka',sans-serif;font-weight:600;text-align:center;transition:border-color .15s;letter-spacing:.04em}
+.gate-input:focus{outline:none;border-color:var(--mustard);box-shadow:0 0 0 4px rgba(245,200,66,.12)}
+.gate-input::placeholder{color:var(--text3)}
+.gate-btn{width:100%;margin-top:16px;background:linear-gradient(135deg,var(--mustard),#e6b800);color:var(--navy);border-radius:var(--r);padding:15px;font-size:1.1rem;font-weight:900;font-family:'Fredoka',sans-serif;letter-spacing:.02em;box-shadow:0 4px 16px rgba(245,200,66,.35);transition:all .15s}
+.gate-btn:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(245,200,66,.45)}
+.gate-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.gate-err{color:var(--coral);font-size:.82rem;font-weight:700;margin-top:8px;min-height:18px}
 
-insert into settings (key, value) values
-  ('shop_name',     'Festival Shop'),
-  ('tagline',       'School Festival 2025'),
-  ('emoji',         '🎪'),
-  ('currency',      '¥'),
-  ('tax',           '0'),
-  ('receipt_msg',   'Thank you! Come again 🎉'),
-  ('admin_password','admin1234')
-on conflict (key) do nothing;
+/* ── HEADER ─────────────────────────────────────────────── */
+.hdr{background:rgba(27,35,64,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{font-size:1.7rem;line-height:1}
+.logo-name{font-family:'Fredoka',sans-serif;font-size:1.3rem;font-weight:700;color:var(--mustard)}
+.logo-sub{font-size:.7rem;color:var(--text3);font-weight:700}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.table-badge{background:var(--navy3);border:1px solid var(--border);border-radius:99px;padding:6px 14px;font-size:.78rem;font-weight:800;color:var(--mustard)}
+.cart-pill{display:flex;align-items:center;gap:7px;background:var(--mustard);color:var(--navy);border-radius:99px;padding:8px 16px;font-weight:800;font-size:.85rem;transition:all .15s}
+.cart-pill:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(245,200,66,.4)}
+.cart-cnt{background:var(--coral);color:#fff;border-radius:99px;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.68rem;padding:0 4px;font-weight:900}
+.my-order-btn{background:var(--navy2);border:1px solid var(--border);color:var(--text3);border-radius:99px;padding:8px 14px;font-size:.78rem;font-weight:700;transition:all .15s}
+.my-order-btn:hover{background:var(--navy3);color:#fff}
 
--- 2. CATEGORIES
-create table if not exists categories (
-  id         uuid primary key default gen_random_uuid(),
-  name       text not null,
-  sort_order int  default 0,
-  created_at timestamptz default now()
-);
+/* ── HERO ────────────────────────────────────────────────── */
+.hero{text-align:center;padding:36px 20px 24px;position:relative;z-index:1}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(245,200,66,.12);border:1px solid rgba(245,200,66,.25);border-radius:99px;padding:5px 14px;font-size:.72rem;font-weight:700;color:var(--mustard);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.hero h1{font-family:'Fredoka',sans-serif;font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;line-height:1.1;margin-bottom:6px}
+.hero h1 span{color:var(--mustard)}
 
-insert into categories (name, sort_order) values
-  ('🍜 Noodles',  1),
-  ('🍚 Rice',     2),
-  ('🥗 Salads',   3),
-  ('🥤 Drinks',   4),
-  ('🍡 Snacks',   5),
-  ('🍱 Sets',     6)
-on conflict do nothing;
+/* ── TABS ────────────────────────────────────────────────── */
+.tabs-wrap{padding:0 20px 18px;overflow-x:auto;scrollbar-width:none;position:relative;z-index:1}
+.tabs-wrap::-webkit-scrollbar{display:none}
+.tabs{display:flex;gap:8px;width:max-content;margin:0 auto}
+.tab{background:var(--navy2);border:1.5px solid var(--border);color:var(--text3);border-radius:99px;padding:7px 18px;font-size:.85rem;font-weight:700;white-space:nowrap;transition:all .18s}
+.tab:hover{border-color:rgba(245,200,66,.4);color:var(--mustard)}
+.tab.on{background:var(--mustard);border-color:var(--mustard);color:var(--navy);box-shadow:0 3px 12px rgba(245,200,66,.35)}
 
--- 3. MENU ITEMS (individual items + set menus)
-create table if not exists menu_items (
-  id          uuid primary key default gen_random_uuid(),
-  category_id uuid references categories(id) on delete set null,
-  name        text    not null,
-  name_jp     text,                    -- Japanese name
-  emoji       text    default '🍽',
-  description text,
-  price       numeric not null,
-  image_url   text,                    -- Supabase Storage URL
-  available   boolean default true,
-  is_set      boolean default false,   -- true = set menu
-  created_at  timestamptz default now()
-);
+/* ── MENU GRID ───────────────────────────────────────────── */
+.menu-wrap{padding:0 16px 120px;max-width:1100px;margin:0 auto;position:relative;z-index:1}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
 
--- 4. SET MENU COMPONENTS (which items make up a set)
-create table if not exists set_components (
-  id           uuid primary key default gen_random_uuid(),
-  set_id       uuid references menu_items(id) on delete cascade,
-  component_id uuid references menu_items(id) on delete cascade,
-  sort_order   int default 0
-);
+.mcard{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--sh);display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+.mcard:hover:not(.sold-out){transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.35)}
+.mcard.sold-out{opacity:.5}
+.mcard.is-set{border-color:rgba(245,200,66,.25)}
 
--- 5. ORDERS  (one per table session)
-create table if not exists orders (
-  id           uuid primary key default gen_random_uuid(),
-  order_number serial,
-  table_num    text not null,
-  status       text not null default 'pending'
-                 check (status in ('pending','preparing','ready','done','cancelled')),
-  total        numeric not null default 0,
-  checked_out  boolean default false,
-  created_at   timestamptz default now(),
-  checked_out_at timestamptz
-);
+.cimg{width:100%;aspect-ratio:4/3;background:var(--navy3);display:flex;align-items:center;justify-content:center;font-size:3.2rem;position:relative;overflow:hidden}
+.cimg img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
+.mcard:hover .cimg img{transform:scale(1.04)}
+.sold-ribbon{position:absolute;top:10px;right:-26px;background:var(--coral);color:#fff;font-size:.65rem;font-weight:800;padding:4px 32px;transform:rotate(35deg);letter-spacing:.05em;pointer-events:none}
+.set-tag{position:absolute;top:8px;left:8px;background:rgba(245,200,66,.9);color:var(--navy);font-size:.65rem;font-weight:900;padding:3px 8px;border-radius:99px;letter-spacing:.04em}
 
--- 6. ORDER ITEMS
-create table if not exists order_items (
-  id           uuid primary key default gen_random_uuid(),
-  order_id     uuid references orders(id) on delete cascade,
-  menu_item_id uuid references menu_items(id) on delete set null,
-  item_name    text,
-  item_name_jp text,
-  item_emoji   text,
-  item_image   text,
-  is_set       boolean default false,
-  quantity     int  not null default 1,
-  unit_price   numeric not null,
-  -- Kitchen tracking: comma-separated prepared flags per quantity
-  -- e.g. "true,false,true" means item 1 and 3 are done, 2 is not
-  prep_status  text default '',        -- JSON array of booleans per qty
-  created_at   timestamptz default now()
-);
+.cbody{padding:12px 14px;flex:1;display:flex;flex-direction:column;gap:4px}
+.cname{font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:600;color:#fff;line-height:1.2}
+.cname-jp{font-size:.78rem;color:var(--text3)}
+.cdesc{font-size:.76rem;color:var(--text3);line-height:1.5;margin-top:2px}
+.set-components{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.set-comp{background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.2);border-radius:99px;padding:2px 8px;font-size:.7rem;color:var(--mustard);font-weight:700}
 
--- 7. SET ITEM COMPONENTS snapshot (what was in the set when ordered)
-create table if not exists order_item_components (
-  id              uuid primary key default gen_random_uuid(),
-  order_item_id   uuid references order_items(id) on delete cascade,
-  component_name  text,
-  component_emoji text,
-  component_image text
-);
+.cfooter{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border);gap:8px;flex-wrap:wrap}
+.cprice{font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:700;color:var(--mustard)}
+.qty-row{display:flex;align-items:center;gap:2px}
+.qb{width:27px;height:27px;background:var(--navy3);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:.95rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.qb:hover{background:var(--mustard);color:var(--navy)}
+.qnum{width:26px;text-align:center;font-weight:800;font-size:.88rem}
+.add-btn{background:var(--coral);color:#fff;border-radius:8px;padding:7px 12px;font-size:.8rem;font-weight:800;display:flex;align-items:center;gap:4px;transition:all .12s;white-space:nowrap}
+.add-btn:hover:not(:disabled){background:#ff5244;transform:translateY(-1px)}
+.add-btn:disabled{background:var(--navy3);color:var(--text3);cursor:not-allowed}
 
--- ============================================================
--- Storage bucket for food images
--- Go to: Storage > New Bucket
--- Name: food-images   Public: YES
--- ============================================================
+/* ── CART DRAWER ─────────────────────────────────────────── */
+.cart-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:none;justify-content:flex-end}
+.cart-bg.open{display:flex}
+.cart-panel{background:#FFF8EE;color:var(--text);width:min(420px,100vw);height:100dvh;display:flex;flex-direction:column;animation:slideR .26s cubic-bezier(.25,.8,.25,1)}
+@keyframes slideR{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.cart-hd{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.cart-hd-title{font-family:'Fredoka',sans-serif;font-size:1.25rem;font-weight:700;color:var(--mustard)}
+.close-c{background:rgba(255,255,255,.1);color:#fff;border-radius:8px;width:30px;height:30px;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+.close-c:hover{background:rgba(255,255,255,.2)}
 
--- ============================================================
--- ROW LEVEL SECURITY  (open for school festival — no auth)
--- ============================================================
-alter table settings              enable row level security;
-alter table categories            enable row level security;
-alter table menu_items            enable row level security;
-alter table set_components        enable row level security;
-alter table orders                enable row level security;
-alter table order_items           enable row level security;
-alter table order_item_components enable row level security;
+.cart-items{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px}
+.ci{display:flex;align-items:center;gap:10px;background:#fff;border-radius:var(--r);padding:11px 13px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.ci-img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:#f0ece4;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;overflow:hidden}
+.ci-img img{width:100%;height:100%;object-fit:cover}
+.ci-info{flex:1;min-width:0}
+.ci-name{font-weight:800;font-size:.87rem;color:var(--text);line-height:1.2}
+.ci-name-jp{font-size:.73rem;color:var(--text2)}
+.ci-comps{font-size:.71rem;color:var(--text3);margin-top:2px}
+.ci-price{font-size:.75rem;color:var(--text2);margin-top:1px}
+.ci-actions{display:flex;align-items:center;gap:3px;flex-shrink:0}
+.cqb{width:25px;height:25px;background:#f0ece4;border-radius:5px;font-weight:800;font-size:.88rem;color:var(--text);display:flex;align-items:center;justify-content:center}
+.cqb:hover{background:var(--mustard)}
+.cqnum{width:22px;text-align:center;font-weight:800;font-size:.82rem}
+.ci-sub{font-family:'Fredoka',sans-serif;font-weight:700;font-size:.92rem;color:var(--coral);min-width:48px;text-align:right;flex-shrink:0}
+.rm-btn{background:none;color:#ccc;font-size:.78rem;padding:2px 4px;border-radius:4px;margin-left:2px}
+.rm-btn:hover{background:#ffe5e2;color:var(--coral)}
+.cart-empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text2);padding:40px;text-align:center}
+.cart-empty-state .big{font-size:3rem}
+.cart-empty-state h3{font-weight:800;color:var(--text)}
 
--- Public read all
-create policy "read settings"    on settings              for select using (true);
-create policy "read categories"  on categories            for select using (true);
-create policy "read menu_items"  on menu_items            for select using (true);
-create policy "read set_comps"   on set_components        for select using (true);
-create policy "read orders"      on orders                for select using (true);
-create policy "read order_items" on order_items           for select using (true);
-create policy "read oi_comps"    on order_item_components for select using (true);
+.rdash{margin:0 18px;border:none;border-top:2px dashed #d8d2c6}
+.totals{padding:12px 18px 0;display:flex;flex-direction:column;gap:5px}
+.trow{display:flex;justify-content:space-between;font-size:.85rem;color:var(--text2)}
+.trow.grand{font-size:1.1rem;font-weight:900;color:var(--text);font-family:'Fredoka',sans-serif;margin-top:5px;padding-top:8px;border-top:2px solid var(--borderL)}
+.trow .amt{font-family:'Fredoka',sans-serif;font-weight:700}
 
--- Public write (simple festival app, no auth)
-create policy "write settings"    on settings              for all using (true) with check (true);
-create policy "write categories"  on categories            for all using (true) with check (true);
-create policy "write menu_items"  on menu_items            for all using (true) with check (true);
-create policy "write set_comps"   on set_components        for all using (true) with check (true);
-create policy "write orders"      on orders                for all using (true) with check (true);
-create policy "write order_items" on order_items           for all using (true) with check (true);
-create policy "write oi_comps"    on order_item_components for all using (true) with check (true);
+.order-form{padding:14px 18px 22px;display:flex;flex-direction:column;gap:8px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.73rem;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.field textarea{padding:9px 11px;border:1.5px solid var(--borderL);border-radius:8px;background:#fff;color:var(--text);font-size:.88rem;font-family:'Nunito',sans-serif;resize:none;height:52px;transition:border-color .15s}
+.field textarea:focus{outline:none;border-color:var(--mustard);box-shadow:0 0 0 3px rgba(245,200,66,.15)}
+.place-btn{background:linear-gradient(135deg,var(--coral),#ff4b3a);color:#fff;border-radius:var(--r);padding:14px;font-size:1rem;font-weight:900;font-family:'Fredoka',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(255,107,91,.4);transition:all .15s;margin-top:2px}
+.place-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,91,.5)}
+.place-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
--- ============================================================
--- SEED sample set menu (サラダセット)
--- Run AFTER the main insert above; adjust IDs if needed
--- ============================================================
-do $$
-declare
-  cat_sets  uuid;
-  cat_sal   uuid;
-  cat_drink uuid;
-  id_salad  uuid;
-  id_miso   uuid;
-  id_set    uuid;
-begin
-  select id into cat_sets  from categories where name='🍱 Sets'   limit 1;
-  select id into cat_sal   from categories where name='🥗 Salads' limit 1;
-  select id into cat_drink from categories where name='🥤 Drinks'  limit 1;
+/* SUCCESS */
+.success-screen{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:50px 28px;text-align:center;flex:1}
+.success-screen.show{display:flex}
+.s-icon{width:72px;height:72px;background:#e8f9f4;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.2rem;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+.s-title{font-family:'Fredoka',sans-serif;font-size:1.5rem;font-weight:700;color:var(--text)}
+.s-num{background:var(--navy);color:var(--mustard);font-family:'Fredoka',sans-serif;font-size:1.3rem;font-weight:700;padding:9px 22px;border-radius:var(--r)}
+.s-msg{color:var(--text2);font-size:.87rem;line-height:1.6;max-width:240px}
+.s-track-btn{background:var(--navy);color:var(--mustard);border-radius:var(--r);padding:11px 22px;font-weight:800;font-family:'Fredoka',sans-serif;font-size:.95rem;margin-top:4px;transition:all .15s}
+.s-track-btn:hover{transform:translateY(-1px)}
+.s-again{background:rgba(255,255,255,.15);color:var(--text2);border-radius:var(--r);padding:9px 18px;font-weight:700;font-size:.85rem;transition:all .15s}
+.s-again:hover{background:rgba(0,0,0,.08)}
 
-  -- individual items
-  insert into menu_items (category_id,name,name_jp,emoji,description,price)
-    values (cat_sal,  'Garden Salad','サラダ',      '🥗','Fresh mixed greens',200),
-           (cat_drink,'Miso Soup',   '味噌汁',      '🍵','Classic dashi miso',150),
-           (cat_drink,'Ramune Soda', 'ラムネ',      '🥤','Marble bottle soda',200),
-           (cat_sal,  'Caesar Salad','シーザーサラダ','🥗','With parmesan croutons',250)
-  returning id into id_salad;
+/* ── MY ORDER STATUS PANEL ───────────────────────────────── */
+.order-status-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:none;justify-content:flex-end}
+.order-status-bg.open{display:flex}
+.order-status-panel{background:#FFF8EE;color:var(--text);width:min(440px,100vw);height:100dvh;display:flex;flex-direction:column;animation:slideR .26s cubic-bezier(.25,.8,.25,1);overflow:hidden}
+.os-hd{background:var(--navy);padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
+.os-hd-title{font-family:'Fredoka',sans-serif;font-size:1.2rem;font-weight:700;color:var(--mustard)}
+.os-body{flex:1;overflow-y:auto;padding:18px}
+.order-block{background:#fff;border-radius:var(--r2);padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.07)}
+.ob-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.ob-num{font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy)}
+.ob-time{font-size:.75rem;color:var(--text3)}
+.ob-status{padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:800;text-transform:capitalize}
+.ob-status.pending  {background:rgba(245,200,66,.15);color:#c49400}
+.ob-status.preparing{background:rgba(78,205,196,.15);color:#2a9d8f}
+.ob-status.ready    {background:rgba(74,222,128,.15);color:#16a34a}
+.ob-status.done     {background:rgba(0,0,0,.06);color:var(--text3)}
+.ob-items{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.ob-item{display:flex;align-items:center;gap:10px}
+.ob-item-img{width:36px;height:36px;border-radius:7px;background:#f0ece4;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;overflow:hidden}
+.ob-item-img img{width:100%;height:100%;object-fit:cover}
+.ob-item-name{font-size:.85rem;font-weight:700;color:var(--text);flex:1}
+.ob-item-qty{font-size:.8rem;color:var(--text3);margin-left:auto}
+.ob-total{display:flex;justify-content:space-between;font-weight:800;font-size:.9rem;color:var(--text);border-top:1px dashed #e0dbd0;padding-top:8px}
+.ob-total .amt{font-family:'Fredoka',sans-serif;color:var(--coral)}
+.os-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:60px 20px;color:var(--text2);text-align:center}
+.os-empty .big{font-size:3rem}
+.status-stepper{display:flex;align-items:center;gap:0;margin-bottom:12px}
+.step{display:flex;flex-direction:column;align-items:center;flex:1}
+.step-dot{width:22px;height:22px;border-radius:50%;background:#e8e2d4;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:900;color:#aaa;transition:all .3s}
+.step-dot.done-step{background:var(--green);color:#fff}
+.step-dot.active-step{background:var(--mustard);color:var(--navy)}
+.step-label{font-size:.6rem;font-weight:700;color:var(--text3);margin-top:3px;text-align:center}
+.step-line{flex:1;height:2px;background:#e8e2d4;margin-bottom:16px}
+.step-line.done-line{background:var(--green)}
 
-  -- get the miso id
-  select id into id_miso from menu_items where name='Miso Soup' limit 1;
-  select id into id_salad from menu_items where name='Garden Salad' limit 1;
+/* ── LOADER ──────────────────────────────────────────────── */
+.loader{display:flex;align-items:center;justify-content:center;padding:60px;grid-column:1/-1}
+.spin{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--mustard);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 20px;color:var(--text3);text-align:center;grid-column:1/-1}
+.empty-state .big{font-size:3rem}
 
-  -- set menu
-  insert into menu_items (category_id,name,name_jp,emoji,description,price,is_set)
-    values (cat_sets,'Salad Set','サラダセット','🍱','Garden Salad + Miso Soup',320,true)
-  returning id into id_set;
+@media(max-width:640px){
+  .menu-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .menu-wrap{padding:0 12px 100px}
+}
+@media(max-width:380px){.menu-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
 
-  -- components
-  insert into set_components (set_id,component_id,sort_order)
-    values (id_set,id_salad,1),(id_set,id_miso,2);
-end $$;
+<!-- TABLE GATE -->
+<div id="gate">
+  <div class="gate-box">
+    <span class="gate-emoji" id="gate-emoji">🎪</span>
+    <div class="gate-title" id="gate-name">Festival Shop</div>
+    <p class="gate-sub" id="gate-tag">Welcome! Please enter your table number to start ordering.</p>
+    <div class="gate-card">
+      <label class="gate-label" for="gate-input">Your Table Number</label>
+      <input class="gate-input" id="gate-input" type="text" placeholder="e.g. 1, A3, VIP-2" maxlength="10" autocomplete="off"/>
+      <button class="gate-btn" id="gate-btn">Start Ordering →</button>
+      <div class="gate-err" id="gate-err"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until gate passed) -->
+<div id="app" style="display:none">
+  <header class="hdr">
+    <div class="logo">
+      <div class="logo-icon" id="hdr-emoji">🎪</div>
+      <div>
+        <div class="logo-name" id="hdr-name">Festival Shop</div>
+        <div class="logo-sub" id="hdr-tag"></div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <span class="table-badge">🪑 Table <span id="table-display">—</span></span>
+      <button class="my-order-btn" id="my-order-btn">📋 My Orders</button>
+      <button class="cart-pill" id="cart-open-btn">
+        🛒 Cart <span class="cart-cnt" id="cart-cnt">0</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="hero-tag">🌟 School Festival 2025</div>
+    <h1>What would you <span>like today?</span></h1>
+  </div>
+
+  <div class="tabs-wrap">
+    <div class="tabs" id="tabs">
+      <button class="tab on" data-cat="all">🍽 All</button>
+    </div>
+  </div>
+
+  <div class="menu-wrap">
+    <div class="menu-grid" id="menu-grid">
+      <div class="loader"><div class="spin"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CART DRAWER -->
+<div class="cart-bg" id="cart-bg">
+  <div class="cart-panel">
+    <div class="cart-hd">
+      <span class="cart-hd-title">🧾 Your Cart</span>
+      <button class="close-c" id="cart-close">✕</button>
+    </div>
+
+    <div class="success-screen" id="success-screen">
+      <div class="s-icon">✅</div>
+      <div class="s-title">Order Placed!</div>
+      <div class="s-num" id="s-num">#0001</div>
+      <div class="s-msg">We'll call your table when it's ready!</div>
+      <button class="s-track-btn" id="s-track-btn">📋 Track My Order</button>
+      <button class="s-again" id="s-again">+ Order More</button>
+    </div>
+
+    <div id="cart-main" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <div class="cart-items" id="cart-items"></div>
+      <div id="cart-foot">
+        <hr class="rdash"/>
+        <div class="totals" id="cart-totals"></div>
+        <div class="order-form">
+          <div class="field">
+            <label>Special Notes (optional)</label>
+            <textarea id="f-notes" placeholder="Allergies, no spicy, extra sauce…" maxlength="200"></textarea>
+          </div>
+          <button class="place-btn" id="place-btn" disabled>🎉 Place Order for Table <span id="place-table">—</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MY ORDERS STATUS PANEL -->
+<div class="order-status-bg" id="os-bg">
+  <div class="order-status-panel">
+    <div class="os-hd">
+      <span class="os-hd-title">📋 My Orders — Table <span id="os-table">—</span></span>
+      <button class="close-c" id="os-close">✕</button>
+    </div>
+    <div class="os-body" id="os-body">
+      <div class="os-empty"><div class="big">📋</div><p>Loading orders…</p></div>
+    </div>
+  </div>
+</div>
+
+<div id="toast-area"></div>
+
+<script type="module">
+import { sb, getSettings, fmt, esc, toast, padNum } from './supabase-config.js';
+
+// ── State ──────────────────────────────────────────────────
+let settings   = {};
+let categories = [];
+let items      = [];
+let setComps   = {};   // setId → [{name, emoji, image}]
+let cart       = [];
+let tableNum   = '';
+let activeCat  = 'all';
+
+// ── Boot ───────────────────────────────────────────────────
+(async () => {
+  settings = await getSettings();
+  applyBranding();
+  renderGate();
+})();
+
+function applyBranding() {
+  const name = settings.shop_name || 'Festival Shop';
+  const emoji = settings.emoji || '🎪';
+  const tag   = settings.tagline || '';
+  ['gate-emoji','hdr-emoji'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = emoji; });
+  ['gate-name','hdr-name'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = name; });
+  document.getElementById('gate-tag').textContent = tag ? tag + ' — enter your table number to start.' : 'Enter your table number to start ordering.';
+  const ht = document.getElementById('hdr-tag'); if(ht) ht.textContent = tag;
+  document.title = name;
+}
+
+// ── Gate ──────────────────────────────────────────────────
+function renderGate() {}
+
+const gateBtn = document.getElementById('gate-btn');
+const gateIn  = document.getElementById('gate-input');
+const gateErr = document.getElementById('gate-err');
+
+gateIn.addEventListener('keydown', e => { if(e.key==='Enter') gateBtn.click(); });
+gateBtn.addEventListener('click', () => {
+  const val = gateIn.value.trim();
+  if (!val) { gateErr.textContent = 'Please enter your table number.'; return; }
+  tableNum = val;
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display  = 'block';
+  document.getElementById('table-display').textContent = tableNum;
+  document.getElementById('os-table').textContent     = tableNum;
+  document.getElementById('place-table').textContent  = tableNum;
+  gateErr.textContent = '';
+  loadMenu();
+});
+
+// ── Load Menu ──────────────────────────────────────────────
+async function loadMenu() {
+  const [{ data: cats }, { data: its }, { data: comps }] = await Promise.all([
+    sb.from('categories').select('*').order('sort_order'),
+    sb.from('menu_items').select('*').order('created_at'),
+    sb.from('set_components').select('*, component:component_id(name, name_jp, emoji, image_url)'),
+  ]);
+  categories = cats || [];
+  items      = its  || [];
+
+  // Build setComps map
+  setComps = {};
+  (comps || []).forEach(c => {
+    if (!setComps[c.set_id]) setComps[c.set_id] = [];
+    setComps[c.set_id].push(c.component);
+  });
+
+  renderTabs();
+  renderGrid();
+}
+
+// ── Tabs ───────────────────────────────────────────────────
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = `<button class="tab on" data-cat="all">🍽 All</button>`;
+  categories.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'tab'; b.dataset.cat = c.id; b.textContent = c.name;
+    tabs.appendChild(b);
+  });
+  tabs.addEventListener('click', e => {
+    const b = e.target.closest('.tab'); if(!b) return;
+    activeCat = b.dataset.cat;
+    tabs.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.cat===activeCat));
+    renderGrid();
+  });
+}
+
+// ── Menu Grid ──────────────────────────────────────────────
+function renderGrid() {
+  const grid = document.getElementById('menu-grid');
+  const sym  = settings.currency || '¥';
+  let list   = activeCat==='all' ? items : items.filter(i=>i.category_id===activeCat);
+
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="big">🍽</div><p style="font-weight:700;opacity:.5">No items here</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(it => {
+    const comps = setComps[it.id] || [];
+    const imgEl = it.image_url
+      ? `<img src="${esc(it.image_url)}" alt="${esc(it.name)}" loading="lazy"/>`
+      : `<span>${esc(it.emoji||'🍽')}</span>`;
+
+    return `
+      <div class="mcard ${it.available?'':'sold-out'} ${it.is_set?'is-set':''}">
+        <div class="cimg">
+          ${imgEl}
+          ${it.is_set?'<div class="set-tag">SET</div>':''}
+          ${!it.available?'<div class="sold-ribbon">SOLD OUT</div>':''}
+        </div>
+        <div class="cbody">
+          <div class="cname">${esc(it.name)}</div>
+          ${it.name_jp?`<div class="cname-jp">${esc(it.name_jp)}</div>`:''}
+          ${it.description?`<div class="cdesc">${esc(it.description)}</div>`:''}
+          ${comps.length?`<div class="set-components">${comps.map(c=>`<span class="set-comp">${esc(c.emoji||'')} ${esc(c.name_jp||c.name)}</span>`).join('')}</div>`:''}
+        </div>
+        <div class="cfooter">
+          <div class="cprice">${fmt(it.price,sym)}</div>
+          <div class="qty-row">
+            <button class="qb" data-id="${it.id}" data-d="-1">−</button>
+            <span class="qnum" id="q-${it.id}">1</span>
+            <button class="qb" data-id="${it.id}" data-d="1">+</button>
+          </div>
+          <button class="add-btn" data-id="${it.id}" ${it.available?'':'disabled'}>
+            ${it.available?'+ Add':'Sold out'}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.qb').forEach(b =>
+    b.addEventListener('click', () => adjQty(b.dataset.id, parseInt(b.dataset.d))));
+  grid.querySelectorAll('.add-btn:not(:disabled)').forEach(b =>
+    b.addEventListener('click', () => addItem(b.dataset.id)));
+}
+
+function adjQty(id, d) {
+  const el = document.getElementById('q-'+id);
+  if (el) el.textContent = Math.max(1, Math.min(20, parseInt(el.textContent)+d));
+}
+
+// ── Cart ───────────────────────────────────────────────────
+function addItem(id) {
+  const it  = items.find(x=>x.id===id);
+  const qty = parseInt(document.getElementById('q-'+id)?.textContent||'1');
+  if (!it) return;
+  const ex = cart.find(e=>e.id===id);
+  if (ex) ex.qty += qty;
+  else cart.push({
+    id: it.id, name: it.name, name_jp: it.name_jp||'',
+    emoji: it.emoji||'🍽', image_url: it.image_url||'',
+    price: parseFloat(it.price), qty,
+    is_set: it.is_set||false,
+    components: (setComps[it.id]||[]).map(c=>({name:c.name_jp||c.name,emoji:c.emoji||'',image:c.image_url||''})),
+  });
+  const qel = document.getElementById('q-'+id); if(qel) qel.textContent='1';
+  refreshBadge(); renderCartItems();
+  toast('Added! 🛒', 'success');
+}
+
+function cartTotal() {
+  const sub = cart.reduce((s,e)=>s+e.price*e.qty,0);
+  const tax  = sub*(parseFloat(settings.tax||0)/100);
+  return { sub, tax, total: sub+tax };
+}
+
+function refreshBadge() {
+  document.getElementById('cart-cnt').textContent = cart.reduce((s,e)=>s+e.qty,0);
+}
+
+function renderCartItems() {
+  const listEl  = document.getElementById('cart-items');
+  const totEl   = document.getElementById('cart-totals');
+  const placeEl = document.getElementById('place-btn');
+  const sym     = settings.currency||'¥';
+
+  if (!cart.length) {
+    listEl.innerHTML=`<div class="cart-empty-state"><div class="big">🛒</div><h3>Cart is empty</h3><p>Add items from the menu!</p></div>`;
+    totEl.innerHTML=''; placeEl.disabled=true; return;
+  }
+
+  listEl.innerHTML = cart.map(e=>`
+    <div class="ci">
+      <div class="ci-img">
+        ${e.image_url?`<img src="${esc(e.image_url)}" loading="lazy"/>`:esc(e.emoji)}
+      </div>
+      <div class="ci-info">
+        <div class="ci-name">${esc(e.name)}</div>
+        ${e.name_jp?`<div class="ci-name-jp">${esc(e.name_jp)}</div>`:''}
+        ${e.components?.length?`<div class="ci-comps">${e.components.map(c=>esc(c.emoji+' '+c.name)).join(' · ')}</div>`:''}
+        <div class="ci-price">${fmt(e.price,sym)} each</div>
+      </div>
+      <div class="ci-actions">
+        <button class="cqb" data-id="${e.id}" data-d="-1">−</button>
+        <span class="cqnum">${e.qty}</span>
+        <button class="cqb" data-id="${e.id}" data-d="1">+</button>
+        <button class="rm-btn" data-rm="${e.id}">🗑</button>
+      </div>
+      <div class="ci-sub">${fmt(e.price*e.qty,sym)}</div>
+    </div>
+  `).join('');
+
+  listEl.querySelectorAll('.cqb').forEach(b=>b.addEventListener('click',()=>{
+    const ex=cart.find(x=>x.id===b.dataset.id); if(!ex) return;
+    ex.qty=Math.max(1,ex.qty+parseInt(b.dataset.d));
+    refreshBadge(); renderCartItems();
+  }));
+  listEl.querySelectorAll('.rm-btn').forEach(b=>b.addEventListener('click',()=>{
+    cart=cart.filter(x=>x.id!==b.dataset.rm); refreshBadge(); renderCartItems();
+  }));
+
+  const {sub,tax,total}=cartTotal();
+  totEl.innerHTML=`
+    <div class="trow"><span>Subtotal</span><span class="amt">${fmt(sub,sym)}</span></div>
+    ${parseFloat(settings.tax||0)>0?`<div class="trow"><span>Tax (${settings.tax}%)</span><span class="amt">${fmt(Math.round(tax),sym)}</span></div>`:''}
+    <div class="trow grand"><span>Total</span><span class="amt">${fmt(Math.round(total),sym)}</span></div>
+  `;
+  placeEl.disabled=false;
+}
+
+// ── Place Order ────────────────────────────────────────────
+document.getElementById('place-btn').addEventListener('click', async ()=>{
+  if (!cart.length) return;
+  const btn=document.getElementById('place-btn');
+  btn.disabled=true; btn.textContent='Placing order…';
+
+  const {total}=cartTotal();
+  const {data:order,error}=await sb.from('orders').insert({
+    table_num: tableNum, status:'pending', total:Math.round(total),
+  }).select().single();
+
+  if (error) { toast('Error: '+error.message,'error'); btn.disabled=false; btn.innerHTML=`🎉 Place Order for Table <span id="place-table">${tableNum}</span>`; return; }
+
+  // Insert order items
+  const itemRows=cart.map(e=>({
+    order_id:e.order.id||order.id, // fix below
+    menu_item_id:e.id, item_name:e.name, item_name_jp:e.name_jp,
+    item_emoji:e.emoji, item_image:e.image_url||null,
+    is_set:e.is_set, quantity:e.qty, unit_price:e.price,
+    prep_status: JSON.stringify(Array(e.qty).fill(false)),
+    order_id: order.id,
+  }));
+  const {data:insertedItems}=await sb.from('order_items').insert(itemRows).select();
+
+  // Insert set components
+  const compRows=[];
+  (insertedItems||[]).forEach((oi,i)=>{
+    const cartEntry=cart[i];
+    (cartEntry.components||[]).forEach(c=>{
+      compRows.push({order_item_id:oi.id,component_name:c.name,component_emoji:c.emoji,component_image:c.image||null});
+    });
+  });
+  if (compRows.length) await sb.from('order_item_components').insert(compRows);
+
+  // Update order notes
+  if (document.getElementById('f-notes').value.trim()) {
+    await sb.from('orders').update({notes:document.getElementById('f-notes').value.trim()}).eq('id',order.id);
+  }
+
+  document.getElementById('s-num').textContent='#'+padNum(order.order_number);
+  document.getElementById('cart-main').style.display='none';
+  document.getElementById('success-screen').classList.add('show');
+  cart=[]; refreshBadge();
+  toast('Order placed! 🎉','success');
+});
+
+document.getElementById('s-again').addEventListener('click',()=>{
+  document.getElementById('success-screen').classList.remove('show');
+  document.getElementById('cart-main').style.display='flex';
+  document.getElementById('place-btn').innerHTML=`🎉 Place Order for Table <span id="place-table">${tableNum}</span>`;
+  document.getElementById('place-btn').disabled=true;
+  document.getElementById('f-notes').value='';
+  renderCartItems();
+  document.getElementById('cart-bg').classList.remove('open');
+});
+
+document.getElementById('s-track-btn').addEventListener('click',()=>{
+  document.getElementById('cart-bg').classList.remove('open');
+  openMyOrders();
+});
+
+// ── Cart open/close ────────────────────────────────────────
+document.getElementById('cart-open-btn').addEventListener('click',()=>{document.getElementById('cart-bg').classList.add('open');renderCartItems();});
+document.getElementById('cart-close').addEventListener('click',()=>document.getElementById('cart-bg').classList.remove('open'));
+document.getElementById('cart-bg').addEventListener('click',e=>{if(e.target===document.getElementById('cart-bg'))document.getElementById('cart-bg').classList.remove('open');});
+
+// ── My Orders Panel ────────────────────────────────────────
+document.getElementById('my-order-btn').addEventListener('click', openMyOrders);
+document.getElementById('os-close').addEventListener('click',()=>document.getElementById('os-bg').classList.remove('open'));
+document.getElementById('os-bg').addEventListener('click',e=>{if(e.target===document.getElementById('os-bg'))document.getElementById('os-bg').classList.remove('open');});
+
+async function openMyOrders() {
+  document.getElementById('os-bg').classList.add('open');
+  await renderMyOrders();
+}
+
+async function renderMyOrders() {
+  const body=document.getElementById('os-body');
+  const sym =settings.currency||'¥';
+  body.innerHTML='<div class="os-empty"><div class="spin"></div></div>';
+
+  const {data:orders}=await sb.from('orders')
+    .select('*, order_items(*, order_item_components(component_name,component_emoji))')
+    .eq('table_num',tableNum)
+    .neq('status','cancelled')
+    .order('created_at',{ascending:false});
+
+  if (!orders?.length) {
+    body.innerHTML='<div class="os-empty"><div class="big">📋</div><p style="font-weight:700;color:var(--text3)">No orders for this table yet</p></div>';
+    return;
+  }
+
+  const STEPS=['pending','preparing','ready','done'];
+  body.innerHTML=orders.map(o=>{
+    const si=STEPS.indexOf(o.status);
+    return `
+      <div class="order-block">
+        <div class="ob-top">
+          <div><div class="ob-num">#${padNum(o.order_number)}</div><div class="ob-time">${timeAgo(o.created_at)}</div></div>
+          <div class="ob-status ${o.status}">${o.status}</div>
+        </div>
+        <div class="status-stepper">
+          ${STEPS.map((s,i)=>`
+            <div class="step">
+              <div class="step-dot ${i<si?'done-step':i===si?'active-step':''}">${i<si?'✓':i+1}</div>
+              <div class="step-label">${{pending:'Received',preparing:'Cooking',ready:'Ready!',done:'Done'}[s]}</div>
+            </div>
+            ${i<STEPS.length-1?`<div class="step-line ${i<si?'done-line':''}"></div>`:''}
+          `).join('')}
+        </div>
+        <div class="ob-items">
+          ${(o.order_items||[]).map(oi=>`
+            <div class="ob-item">
+              <div class="ob-item-img">
+                ${oi.item_image?`<img src="${esc(oi.item_image)}" loading="lazy"/>`:(oi.item_emoji||'🍽')}
+              </div>
+              <div class="ob-item-name">${esc(oi.item_name_jp||oi.item_name)}</div>
+              <div class="ob-item-qty">×${oi.quantity}</div>
+            </div>
+            ${(oi.order_item_components||[]).length?`<div style="font-size:.72rem;color:var(--text3);margin-left:46px;margin-top:-4px">Contains: ${oi.order_item_components.map(c=>esc(c.component_emoji+' '+c.component_name)).join(', ')}</div>`:''}
+          `).join('')}
+        </div>
+        <div class="ob-total"><span>Total</span><span class="amt">${fmt(o.total,sym)}</span></div>
+        ${o.status==='ready'?'<div style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:8px;padding:8px 12px;font-size:.8rem;font-weight:700;color:#16a34a;text-align:center;margin-top:8px">🔔 Your order is ready! Please collect at the counter.</div>':''}
+      </div>
+    `;
+  }).join('');
+}
+
+function timeAgo(iso) {
+  const s=Math.floor((Date.now()-new Date(iso))/1000);
+  if(s<60) return s+'s ago'; if(s<3600) return Math.floor(s/60)+'m ago'; return Math.floor(s/3600)+'h ago';
+}
+
+// Auto-refresh my orders every 20s while panel is open
+setInterval(()=>{
+  if(document.getElementById('os-bg').classList.contains('open')) renderMyOrders();
+},20000);
+</script>
+</body>
+</html>
