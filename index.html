@@ -1,467 +1,174 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Festival Shop — Order</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
-<style>
-:root {
-  --navy:    #1B2340;
-  --navy2:   #242E50;
-  --navy3:   #2E3C64;
-  --mustard: #F5C842;
-  --coral:   #FF6B5B;
-  --mint:    #4ECDC4;
-  --cream:   #FFF8EE;
-  --text:    #1B2340;
-  --text2:   #4A5480;
-  --text3:   #9AA0C0;
-  --border:  rgba(255,255,255,0.10);
-  --borderL: #E8E2D4;
-  --r-md: 14px; --r-lg: 20px; --r-xl: 28px;
-  --shadow: 0 4px 20px rgba(0,0,0,0.25);
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:'Nunito',sans-serif;background:var(--navy);color:#fff;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 10%,rgba(245,200,66,.08),transparent 60%),radial-gradient(ellipse 50% 60% at 10% 80%,rgba(78,205,196,.06),transparent 55%);pointer-events:none;z-index:0}
-button{cursor:pointer;font-family:inherit;border:none}
-img{display:block;max-width:100%}
+-- ============================================================
+-- FESTIVAL SHOP v2 — Supabase Schema
+-- Run this in Supabase > SQL Editor > Run
+-- ============================================================
 
-/* HEADER */
-.hdr{background:rgba(27,35,64,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-icon{font-size:1.8rem;line-height:1}
-.logo-name{font-family:'Fredoka',sans-serif;font-size:1.35rem;font-weight:700;color:var(--mustard)}
-.logo-sub{font-size:.72rem;color:var(--text3);font-weight:700}
-.cart-pill{display:flex;align-items:center;gap:8px;background:var(--mustard);color:var(--navy);border-radius:99px;padding:9px 18px;font-weight:800;font-size:.875rem;transition:transform .15s,box-shadow .15s}
-.cart-pill:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(245,200,66,.4)}
-.cart-pill .cnt{background:var(--coral);color:#fff;border-radius:99px;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.7rem;padding:0 4px;font-weight:900}
-.hdr-links{display:flex;gap:8px}
-.hdr-link{background:var(--navy2);border:1px solid var(--border);color:var(--text3);border-radius:8px;padding:8px 14px;font-size:.78rem;font-weight:700;text-decoration:none;transition:all .15s}
-.hdr-link:hover{background:var(--navy3);color:#fff}
+-- 1. SETTINGS
+create table if not exists settings (
+  key   text primary key,
+  value text
+);
 
-/* HERO */
-.hero{text-align:center;padding:44px 20px 28px;position:relative;z-index:1}
-.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(245,200,66,.12);border:1px solid rgba(245,200,66,.25);border-radius:99px;padding:6px 16px;font-size:.75rem;font-weight:700;color:var(--mustard);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
-.hero h1{font-family:'Fredoka',sans-serif;font-size:clamp(2rem,6vw,3rem);font-weight:700;line-height:1.1;margin-bottom:8px}
-.hero h1 span{color:var(--mustard)}
-.hero-sub{color:var(--text3);font-size:.92rem}
+insert into settings (key, value) values
+  ('shop_name',     'Festival Shop'),
+  ('tagline',       'School Festival 2025'),
+  ('emoji',         '🎪'),
+  ('currency',      '¥'),
+  ('tax',           '0'),
+  ('receipt_msg',   'Thank you! Come again 🎉'),
+  ('admin_password','admin1234')
+on conflict (key) do nothing;
 
-/* TABS */
-.tabs-wrap{padding:0 20px 20px;overflow-x:auto;scrollbar-width:none;position:relative;z-index:1}
-.tabs-wrap::-webkit-scrollbar{display:none}
-.tabs{display:flex;gap:8px;width:max-content;margin:0 auto}
-.tab{background:var(--navy2);border:1.5px solid var(--border);color:var(--text3);border-radius:99px;padding:8px 20px;font-size:.875rem;font-weight:700;white-space:nowrap;transition:all .18s}
-.tab:hover{border-color:rgba(245,200,66,.4);color:var(--mustard)}
-.tab.on{background:var(--mustard);border-color:var(--mustard);color:var(--navy);box-shadow:0 3px 14px rgba(245,200,66,.35)}
+-- 2. CATEGORIES
+create table if not exists categories (
+  id         uuid primary key default gen_random_uuid(),
+  name       text not null,
+  sort_order int  default 0,
+  created_at timestamptz default now()
+);
 
-/* MENU GRID */
-.menu-wrap{padding:0 20px 120px;max-width:1100px;margin:0 auto;position:relative;z-index:1}
-.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:18px}
-.mcard{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
-.mcard:hover:not(.sold-out){transform:translateY(-4px);box-shadow:0 8px 32px rgba(0,0,0,.35)}
-.mcard.sold-out{opacity:.5}
-.cimg{width:100%;aspect-ratio:4/3;background:var(--navy3);display:flex;align-items:center;justify-content:center;font-size:3.5rem;position:relative}
-.cimg img{width:100%;height:100%;object-fit:cover}
-.sold-ribbon{position:absolute;top:12px;right:-28px;background:var(--coral);color:#fff;font-size:.68rem;font-weight:800;padding:4px 36px;transform:rotate(35deg);letter-spacing:.05em}
-.cbody{padding:14px 16px;flex:1;display:flex;flex-direction:column;gap:5px}
-.cname{font-family:'Fredoka',sans-serif;font-size:1.05rem;font-weight:600;color:#fff}
-.cdesc{font-size:.77rem;color:var(--text3);line-height:1.5}
-.cfooter{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);gap:10px;flex-wrap:wrap}
-.cprice{font-family:'Fredoka',sans-serif;font-size:1.15rem;font-weight:700;color:var(--mustard)}
-.qty-row{display:flex;align-items:center;gap:2px}
-.qb{width:28px;height:28px;background:var(--navy3);border:1px solid var(--border);border-radius:6px;color:#fff;font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .12s}
-.qb:hover{background:var(--mustard);color:var(--navy)}
-.qnum{width:28px;text-align:center;font-weight:800;font-size:.9rem}
-.add-btn{background:var(--coral);color:#fff;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:800;display:flex;align-items:center;gap:5px;transition:transform .12s,background .12s;white-space:nowrap}
-.add-btn:hover:not(:disabled){background:#ff5244;transform:translateY(-1px)}
-.add-btn:disabled{background:var(--navy3);color:var(--text3);cursor:not-allowed}
+insert into categories (name, sort_order) values
+  ('🍜 Noodles',  1),
+  ('🍚 Rice',     2),
+  ('🥗 Salads',   3),
+  ('🥤 Drinks',   4),
+  ('🍡 Snacks',   5),
+  ('🍱 Sets',     6)
+on conflict do nothing;
 
-/* CART DRAWER */
-.cart-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:none;justify-content:flex-end}
-.cart-bg.open{display:flex}
-.cart-panel{background:var(--cream);color:var(--text);width:min(420px,100vw);height:100dvh;display:flex;flex-direction:column;animation:slideRight .28s cubic-bezier(.25,.8,.25,1)}
-@keyframes slideRight{from{transform:translateX(100%)}to{transform:translateX(0)}}
-.cart-hd{background:var(--navy);color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between}
-.cart-hd-title{font-family:'Fredoka',sans-serif;font-size:1.3rem;font-weight:700;color:var(--mustard)}
-.close-c{background:rgba(255,255,255,.1);color:#fff;border-radius:8px;width:32px;height:32px;font-size:1rem;display:flex;align-items:center;justify-content:center}
-.close-c:hover{background:rgba(255,255,255,.2)}
-.cart-items{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px}
-.ci{display:flex;align-items:center;gap:12px;background:#fff;border-radius:var(--r-md);padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
-.ci-emoji{font-size:1.6rem;flex-shrink:0}
-.ci-info{flex:1;min-width:0}
-.ci-name{font-weight:800;font-size:.9rem;color:var(--text)}
-.ci-price{font-size:.77rem;color:var(--text2)}
-.ci-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.cqb{width:26px;height:26px;background:#f0ece4;border-radius:6px;font-weight:800;font-size:.9rem;color:var(--text);display:flex;align-items:center;justify-content:center}
-.cqb:hover{background:var(--mustard)}
-.cqnum{width:24px;text-align:center;font-weight:800;font-size:.85rem}
-.ci-sub{font-family:'Fredoka',sans-serif;font-weight:700;font-size:.95rem;color:var(--coral);min-width:52px;text-align:right;flex-shrink:0}
-.rm-btn{background:none;color:#ccc;font-size:.82rem;padding:2px 4px;border-radius:4px}
-.rm-btn:hover{background:#ffe5e2;color:var(--coral)}
-.cart-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text2);padding:40px;text-align:center}
-.cart-empty .big{font-size:3.5rem}
-.cart-empty h3{font-weight:800;color:var(--text)}
-.rdash{margin:0 20px;border:none;border-top:2px dashed #d8d2c6}
-.totals{padding:14px 20px 0;display:flex;flex-direction:column;gap:6px}
-.trow{display:flex;justify-content:space-between;font-size:.875rem;color:var(--text2)}
-.trow.grand{font-size:1.1rem;font-weight:900;color:var(--text);font-family:'Fredoka',sans-serif;margin-top:6px;padding-top:10px;border-top:2px solid var(--borderL)}
-.trow .amt{font-family:'Fredoka',sans-serif;font-weight:700}
-.order-form{padding:16px 20px 24px;display:flex;flex-direction:column;gap:10px}
-.form2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.field{display:flex;flex-direction:column;gap:4px}
-.field label{font-size:.75rem;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
-.field input,.field textarea{padding:10px 12px;border:1.5px solid var(--borderL);border-radius:8px;background:#fff;color:var(--text);font-size:.9rem;font-family:'Nunito',sans-serif;transition:border-color .15s}
-.field input:focus,.field textarea:focus{outline:none;border-color:var(--mustard);box-shadow:0 0 0 3px rgba(245,200,66,.15)}
-.field textarea{resize:none;height:56px}
-.place-btn{background:linear-gradient(135deg,var(--coral),#ff4b3a);color:#fff;border-radius:var(--r-md);padding:14px;font-size:1rem;font-weight:900;font-family:'Fredoka',sans-serif;letter-spacing:.03em;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 16px rgba(255,107,91,.4);transition:all .15s;margin-top:4px}
-.place-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,91,.5)}
-.place-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+-- 3. MENU ITEMS (individual items + set menus)
+create table if not exists menu_items (
+  id          uuid primary key default gen_random_uuid(),
+  category_id uuid references categories(id) on delete set null,
+  name        text    not null,
+  name_jp     text,                    -- Japanese name
+  emoji       text    default '🍽',
+  description text,
+  price       numeric not null,
+  image_url   text,                    -- Supabase Storage URL
+  available   boolean default true,
+  is_set      boolean default false,   -- true = set menu
+  created_at  timestamptz default now()
+);
 
-/* SUCCESS */
-.success-screen{display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:60px 30px;text-align:center;flex:1}
-.success-screen.show{display:flex}
-.s-icon{width:80px;height:80px;background:#e8f9f4;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}
-@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
-.s-title{font-family:'Fredoka',sans-serif;font-size:1.6rem;font-weight:700;color:var(--text)}
-.s-num{background:var(--navy);color:var(--mustard);font-family:'Fredoka',sans-serif;font-size:1.4rem;font-weight:700;padding:10px 24px;border-radius:var(--r-md)}
-.s-msg{color:var(--text2);font-size:.9rem;max-width:260px;line-height:1.6}
-.s-again{background:var(--mustard);color:var(--navy);border-radius:var(--r-md);padding:12px 28px;font-weight:900;font-family:'Fredoka',sans-serif;font-size:1rem;margin-top:8px;transition:all .15s}
-.s-again:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(245,200,66,.4)}
+-- 4. SET MENU COMPONENTS (which items make up a set)
+create table if not exists set_components (
+  id           uuid primary key default gen_random_uuid(),
+  set_id       uuid references menu_items(id) on delete cascade,
+  component_id uuid references menu_items(id) on delete cascade,
+  sort_order   int default 0
+);
 
-/* LOADER */
-.loader{display:flex;align-items:center;justify-content:center;padding:60px;grid-column:1/-1}
-.spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--mustard);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+-- 5. ORDERS  (one per table session)
+create table if not exists orders (
+  id           uuid primary key default gen_random_uuid(),
+  order_number serial,
+  table_num    text not null,
+  status       text not null default 'pending'
+                 check (status in ('pending','preparing','ready','done','cancelled')),
+  total        numeric not null default 0,
+  checked_out  boolean default false,
+  created_at   timestamptz default now(),
+  checked_out_at timestamptz
+);
 
-@media(max-width:640px){
-  .menu-grid{grid-template-columns:repeat(2,1fr);gap:12px}
-  .form2{grid-template-columns:1fr}
-  .hdr-links .hdr-link span{display:none}
-}
-@media(max-width:380px){.menu-grid{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
+-- 6. ORDER ITEMS
+create table if not exists order_items (
+  id           uuid primary key default gen_random_uuid(),
+  order_id     uuid references orders(id) on delete cascade,
+  menu_item_id uuid references menu_items(id) on delete set null,
+  item_name    text,
+  item_name_jp text,
+  item_emoji   text,
+  item_image   text,
+  is_set       boolean default false,
+  quantity     int  not null default 1,
+  unit_price   numeric not null,
+  -- Kitchen tracking: comma-separated prepared flags per quantity
+  -- e.g. "true,false,true" means item 1 and 3 are done, 2 is not
+  prep_status  text default '',        -- JSON array of booleans per qty
+  created_at   timestamptz default now()
+);
 
-<header class="hdr">
-  <div class="logo">
-    <div class="logo-icon" id="hdr-emoji">🎪</div>
-    <div>
-      <div class="logo-name" id="hdr-name">Festival Shop</div>
-      <div class="logo-sub" id="hdr-tag">School Festival 2025</div>
-    </div>
-  </div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <div class="hdr-links">
-      <a class="hdr-link" href="kitchen.html">👨‍🍳 <span>Kitchen</span></a>
-      <a class="hdr-link" href="admin.html">⚙️ <span>Admin</span></a>
-    </div>
-    <button class="cart-pill" id="cart-open-btn">
-      🛒 Cart <span class="cnt" id="cart-cnt">0</span>
-    </button>
-  </div>
-</header>
+-- 7. SET ITEM COMPONENTS snapshot (what was in the set when ordered)
+create table if not exists order_item_components (
+  id              uuid primary key default gen_random_uuid(),
+  order_item_id   uuid references order_items(id) on delete cascade,
+  component_name  text,
+  component_emoji text,
+  component_image text
+);
 
-<div class="hero">
-  <div class="hero-tag">🌟 School Festival 2025</div>
-  <h1>Grab something <span>delicious</span></h1>
-  <p class="hero-sub">Pick your items, place your order, enjoy!</p>
-</div>
+-- ============================================================
+-- Storage bucket for food images
+-- Go to: Storage > New Bucket
+-- Name: food-images   Public: YES
+-- ============================================================
 
-<div class="tabs-wrap">
-  <div class="tabs" id="tabs">
-    <button class="tab on" data-cat="all">🍽 All</button>
-  </div>
-</div>
+-- ============================================================
+-- ROW LEVEL SECURITY  (open for school festival — no auth)
+-- ============================================================
+alter table settings              enable row level security;
+alter table categories            enable row level security;
+alter table menu_items            enable row level security;
+alter table set_components        enable row level security;
+alter table orders                enable row level security;
+alter table order_items           enable row level security;
+alter table order_item_components enable row level security;
 
-<div class="menu-wrap">
-  <div class="menu-grid" id="menu-grid">
-    <div class="loader"><div class="spin"></div></div>
-  </div>
-</div>
+-- Public read all
+create policy "read settings"    on settings              for select using (true);
+create policy "read categories"  on categories            for select using (true);
+create policy "read menu_items"  on menu_items            for select using (true);
+create policy "read set_comps"   on set_components        for select using (true);
+create policy "read orders"      on orders                for select using (true);
+create policy "read order_items" on order_items           for select using (true);
+create policy "read oi_comps"    on order_item_components for select using (true);
 
-<!-- CART DRAWER -->
-<div class="cart-bg" id="cart-bg">
-  <div class="cart-panel">
-    <div class="cart-hd">
-      <span class="cart-hd-title">🧾 Your Order</span>
-      <button class="close-c" id="cart-close-btn">✕</button>
-    </div>
+-- Public write (simple festival app, no auth)
+create policy "write settings"    on settings              for all using (true) with check (true);
+create policy "write categories"  on categories            for all using (true) with check (true);
+create policy "write menu_items"  on menu_items            for all using (true) with check (true);
+create policy "write set_comps"   on set_components        for all using (true) with check (true);
+create policy "write orders"      on orders                for all using (true) with check (true);
+create policy "write order_items" on order_items           for all using (true) with check (true);
+create policy "write oi_comps"    on order_item_components for all using (true) with check (true);
 
-    <div class="success-screen" id="success-screen">
-      <div class="s-icon">✅</div>
-      <div class="s-title">Order placed!</div>
-      <div class="s-num" id="s-num">#0001</div>
-      <div class="s-msg">We'll call your number when it's ready. Head to the counter!</div>
-      <button class="s-again" id="s-again-btn">Order more →</button>
-    </div>
+-- ============================================================
+-- SEED sample set menu (サラダセット)
+-- Run AFTER the main insert above; adjust IDs if needed
+-- ============================================================
+do $$
+declare
+  cat_sets  uuid;
+  cat_sal   uuid;
+  cat_drink uuid;
+  id_salad  uuid;
+  id_miso   uuid;
+  id_set    uuid;
+begin
+  select id into cat_sets  from categories where name='🍱 Sets'   limit 1;
+  select id into cat_sal   from categories where name='🥗 Salads' limit 1;
+  select id into cat_drink from categories where name='🥤 Drinks'  limit 1;
 
-    <div id="cart-main" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
-      <div class="cart-items" id="cart-items"></div>
-      <div id="cart-bottom">
-        <hr class="rdash"/>
-        <div class="totals" id="cart-totals"></div>
-        <div class="order-form">
-          <div class="form2">
-            <div class="field"><label>Your Name *</label><input id="f-name" placeholder="e.g. Aika" maxlength="40"/></div>
-            <div class="field"><label>Table / Number</label><input id="f-table" placeholder="e.g. Table 3" maxlength="20"/></div>
-          </div>
-          <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="No onions, extra sauce…" maxlength="200"></textarea></div>
-          <button class="place-btn" id="place-btn" disabled>🎉 Place Order</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+  -- individual items
+  insert into menu_items (category_id,name,name_jp,emoji,description,price)
+    values (cat_sal,  'Garden Salad','サラダ',      '🥗','Fresh mixed greens',200),
+           (cat_drink,'Miso Soup',   '味噌汁',      '🍵','Classic dashi miso',150),
+           (cat_drink,'Ramune Soda', 'ラムネ',      '🥤','Marble bottle soda',200),
+           (cat_sal,  'Caesar Salad','シーザーサラダ','🥗','With parmesan croutons',250)
+  returning id into id_salad;
 
-<div id="toast-area" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none"></div>
+  -- get the miso id
+  select id into id_miso from menu_items where name='Miso Soup' limit 1;
+  select id into id_salad from menu_items where name='Garden Salad' limit 1;
 
-<script type="module">
-import { sb, getSettings, fmt, esc, toast } from './supabase-config.js';
+  -- set menu
+  insert into menu_items (category_id,name,name_jp,emoji,description,price,is_set)
+    values (cat_sets,'Salad Set','サラダセット','🍱','Garden Salad + Miso Soup',320,true)
+  returning id into id_set;
 
-// ── State ──────────────────────────────────────────────────
-let settings   = {};
-let categories = [];
-let items      = [];
-let cart       = [];
-let activeCat  = 'all';
-
-// ── Boot ───────────────────────────────────────────────────
-async function boot() {
-  settings   = await getSettings();
-  applySettings();
-
-  const [{ data: cats }, { data: its }] = await Promise.all([
-    sb.from('categories').select('*').order('sort_order'),
-    sb.from('menu_items').select('*,categories(name)').order('created_at'),
-  ]);
-
-  categories = cats || [];
-  items      = its  || [];
-
-  renderTabs();
-  renderGrid();
-}
-boot();
-
-function applySettings() {
-  document.getElementById('hdr-emoji').textContent = settings.emoji || '🎪';
-  document.getElementById('hdr-name').textContent  = settings.shop_name || 'Festival Shop';
-  document.getElementById('hdr-tag').textContent   = settings.tagline   || '';
-  document.title = (settings.shop_name || 'Festival Shop') + ' — Order';
-}
-
-// ── Tabs ──────────────────────────────────────────────────
-function renderTabs() {
-  const tabs = document.getElementById('tabs');
-  tabs.innerHTML = `<button class="tab on" data-cat="all">🍽 All</button>`;
-  categories.forEach(c => {
-    const b = document.createElement('button');
-    b.className = 'tab';
-    b.dataset.cat = c.id;
-    b.textContent = c.name;
-    tabs.appendChild(b);
-  });
-  tabs.addEventListener('click', e => {
-    const b = e.target.closest('.tab');
-    if (!b) return;
-    activeCat = b.dataset.cat;
-    tabs.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.cat === activeCat));
-    renderGrid();
-  });
-}
-
-// ── Menu Grid ─────────────────────────────────────────────
-function renderGrid() {
-  const grid = document.getElementById('menu-grid');
-  const sym  = settings.currency || '¥';
-  const list = activeCat === 'all' ? items : items.filter(i => i.category_id === activeCat);
-
-  if (!list.length) {
-    grid.innerHTML = `<div class="loader" style="flex-direction:column;gap:10px;color:var(--text3)"><span style="font-size:3rem">🍽</span><span style="font-weight:700">No items in this category</span></div>`;
-    return;
-  }
-
-  grid.innerHTML = list.map(it => `
-    <div class="mcard ${it.available ? '' : 'sold-out'}">
-      <div class="cimg">
-        ${it.image_url ? `<img src="${esc(it.image_url)}" alt="${esc(it.name)}" loading="lazy"/>` : `<span>${esc(it.emoji||'🍽')}</span>`}
-        ${!it.available ? '<div class="sold-ribbon">SOLD OUT</div>' : ''}
-      </div>
-      <div class="cbody">
-        <div class="cname">${esc(it.name)}</div>
-        ${it.description ? `<div class="cdesc">${esc(it.description)}</div>` : ''}
-      </div>
-      <div class="cfooter">
-        <div class="cprice">${fmt(it.price, sym)}</div>
-        <div class="qty-row">
-          <button class="qb" data-id="${it.id}" data-d="-1">−</button>
-          <span class="qnum" id="q-${it.id}">1</span>
-          <button class="qb" data-id="${it.id}" data-d="1">+</button>
-        </div>
-        <button class="add-btn" data-id="${it.id}" ${it.available?'':'disabled'}>
-          ${it.available ? '+ Add' : 'Sold out'}
-        </button>
-      </div>
-    </div>
-  `).join('');
-
-  grid.querySelectorAll('.qb').forEach(b =>
-    b.addEventListener('click', () => adjQty(b.dataset.id, parseInt(b.dataset.d))));
-  grid.querySelectorAll('.add-btn:not(:disabled)').forEach(b =>
-    b.addEventListener('click', () => addItem(b.dataset.id)));
-}
-
-function adjQty(id, d) {
-  const el = document.getElementById('q-' + id);
-  if (el) el.textContent = Math.max(1, Math.min(20, parseInt(el.textContent) + d));
-}
-
-function addItem(id) {
-  const it  = items.find(x => x.id === id);
-  const qty = parseInt(document.getElementById('q-' + id)?.textContent || '1');
-  if (!it) return;
-  const ex = cart.find(e => e.id === id);
-  if (ex) ex.qty += qty;
-  else cart.push({ id: it.id, name: it.name, emoji: it.emoji || '🍽', price: parseFloat(it.price), qty });
-  const qel = document.getElementById('q-' + id);
-  if (qel) qel.textContent = '1';
-  refreshBadge();
-  renderCartItems();
-  toast('Added to cart! 🛒', 'success');
-}
-
-// ── Cart ──────────────────────────────────────────────────
-function cartTotal() {
-  const sub = cart.reduce((s, e) => s + e.price * e.qty, 0);
-  const tax = sub * (parseFloat(settings.tax || 0) / 100);
-  return { sub, tax, total: sub + tax };
-}
-
-function refreshBadge() {
-  const n = cart.reduce((s, e) => s + e.qty, 0);
-  document.getElementById('cart-cnt').textContent = n;
-}
-
-function renderCartItems() {
-  const listEl  = document.getElementById('cart-items');
-  const totEl   = document.getElementById('cart-totals');
-  const placeEl = document.getElementById('place-btn');
-  const sym     = settings.currency || '¥';
-
-  if (!cart.length) {
-    listEl.innerHTML = `<div class="cart-empty"><div class="big">🛒</div><h3>Cart is empty</h3><p>Add some items from the menu!</p></div>`;
-    totEl.innerHTML  = '';
-    placeEl.disabled = true;
-    return;
-  }
-
-  listEl.innerHTML = cart.map(e => `
-    <div class="ci">
-      <div class="ci-emoji">${esc(e.emoji)}</div>
-      <div class="ci-info">
-        <div class="ci-name">${esc(e.name)}</div>
-        <div class="ci-price">${fmt(e.price, sym)} each</div>
-      </div>
-      <div class="ci-actions">
-        <button class="cqb" data-id="${e.id}" data-d="-1">−</button>
-        <span class="cqnum">${e.qty}</span>
-        <button class="cqb" data-id="${e.id}" data-d="1">+</button>
-        <button class="rm-btn" data-rm="${e.id}">🗑</button>
-      </div>
-      <div class="ci-sub">${fmt(e.price * e.qty, sym)}</div>
-    </div>
-  `).join('');
-
-  listEl.querySelectorAll('.cqb').forEach(b =>
-    b.addEventListener('click', () => {
-      const ex = cart.find(x => x.id === b.dataset.id);
-      if (!ex) return;
-      ex.qty = Math.max(1, ex.qty + parseInt(b.dataset.d));
-      refreshBadge(); renderCartItems();
-    }));
-  listEl.querySelectorAll('.rm-btn').forEach(b =>
-    b.addEventListener('click', () => {
-      cart = cart.filter(x => x.id !== b.dataset.rm);
-      refreshBadge(); renderCartItems();
-    }));
-
-  const { sub, tax, total } = cartTotal();
-  totEl.innerHTML = `
-    <div class="trow"><span>Subtotal</span><span class="amt">${fmt(sub, sym)}</span></div>
-    ${parseFloat(settings.tax||0) > 0 ? `<div class="trow"><span>Tax (${settings.tax}%)</span><span class="amt">${fmt(Math.round(tax), sym)}</span></div>` : ''}
-    <div class="trow grand"><span>Total</span><span class="amt">${fmt(Math.round(total), sym)}</span></div>
-  `;
-  placeEl.disabled = false;
-}
-
-// ── Place Order ───────────────────────────────────────────
-document.getElementById('place-btn').addEventListener('click', async () => {
-  const name = document.getElementById('f-name').value.trim();
-  if (!name)      { toast('Please enter your name!', 'error'); return; }
-  if (!cart.length){ toast('Your cart is empty!', 'error'); return; }
-
-  const btn = document.getElementById('place-btn');
-  btn.disabled = true;
-  btn.textContent = 'Placing order…';
-
-  const { sub, total } = cartTotal();
-  const { data: order, error } = await sb.from('orders').insert({
-    customer:  name,
-    table_num: document.getElementById('f-table').value.trim() || null,
-    notes:     document.getElementById('f-notes').value.trim() || null,
-    status:    'pending',
-    total:     Math.round(total),
-  }).select().single();
-
-  if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; btn.innerHTML = '🎉 Place Order'; return; }
-
-  const rows = cart.map(e => ({
-    order_id:     order.id,
-    menu_item_id: e.id,
-    item_name:    e.name,
-    item_emoji:   e.emoji,
-    quantity:     e.qty,
-    unit_price:   e.price,
-  }));
-  await sb.from('order_items').insert(rows);
-
-  // Show success
-  document.getElementById('s-num').textContent = '#' + String(order.order_number).padStart(4, '0');
-  document.getElementById('cart-main').style.display = 'none';
-  document.getElementById('success-screen').classList.add('show');
-  cart = [];
-  refreshBadge();
-  toast('Order placed! 🎉', 'success');
-});
-
-document.getElementById('s-again-btn').addEventListener('click', () => {
-  document.getElementById('success-screen').classList.remove('show');
-  document.getElementById('cart-main').style.display = 'flex';
-  document.getElementById('f-name').value  = '';
-  document.getElementById('f-table').value = '';
-  document.getElementById('f-notes').value = '';
-  document.getElementById('place-btn').innerHTML = '🎉 Place Order';
-  document.getElementById('place-btn').disabled = true;
-  renderCartItems();
-  document.getElementById('cart-bg').classList.remove('open');
-});
-
-// ── Cart open/close ───────────────────────────────────────
-document.getElementById('cart-open-btn').addEventListener('click', () => {
-  document.getElementById('cart-bg').classList.add('open');
-  renderCartItems();
-});
-document.getElementById('cart-close-btn').addEventListener('click', () =>
-  document.getElementById('cart-bg').classList.remove('open'));
-document.getElementById('cart-bg').addEventListener('click', e => {
-  if (e.target === document.getElementById('cart-bg'))
-    document.getElementById('cart-bg').classList.remove('open');
-});
-</script>
-</body>
-</html>
+  -- components
+  insert into set_components (set_id,component_id,sort_order)
+    values (id_set,id_salad,1),(id_set,id_miso,2);
+end $$;
