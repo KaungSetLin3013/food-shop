@@ -2,8 +2,8 @@
 // supabase-config.js  — Edit ONLY the two lines below
 // Supabase Dashboard → Settings → API
 // ============================================================
-const SUPABASE_URL = 'https://kwqbkbcumkkcvametfif.supabase.co'; 
-const SUPABASE_ANON_KEY = 'sb_publishable_cGM5bOHGGJRBuUZX9FA2Vg_pP9aTf4i';
+const SUPABASE_URL = 'https://xtcjbajcbcanuvcnkswz.supabase.co'; 
+const SUPABASE_ANON_KEY = 'sb_publishable_k09ru9G1GsnXLHz5t4I6VQ_X0jbfPKK';
 // ============================================================
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
