@@ -539,20 +539,25 @@ document.getElementById('place-btn').addEventListener('click', async ()=>{
   btn.disabled=true; btn.textContent='Placing order…';
 
   const {total}=cartTotal();
+  const notes=document.getElementById('f-notes').value.trim()||null;
   const {data:order,error}=await sb.from('orders').insert({
-    table_num: tableNum, status:'pending', total:Math.round(total),
+    table_num: tableNum, status:'pending', total:Math.round(total), notes,
   }).select().single();
 
   if (error) { toast('Error: '+error.message,'error'); btn.disabled=false; btn.innerHTML=`🎉 Place Order for Table <span id="place-table">${tableNum}</span>`; return; }
 
   // Insert order items
   const itemRows=cart.map(e=>({
-    order_id:e.order.id||order.id, // fix below
-    menu_item_id:e.id, item_name:e.name, item_name_jp:e.name_jp,
-    item_emoji:e.emoji, item_image:e.image_url||null,
-    is_set:e.is_set, quantity:e.qty, unit_price:e.price,
-    prep_status: JSON.stringify(Array(e.qty).fill(false)),
-    order_id: order.id,
+    order_id:     order.id,
+    menu_item_id: e.id,
+    item_name:    e.name,
+    item_name_jp: e.name_jp || null,
+    item_emoji:   e.emoji,
+    item_image:   e.image_url || null,
+    is_set:       e.is_set || false,
+    quantity:     e.qty,
+    unit_price:   e.price,
+    prep_status:  JSON.stringify(Array(e.qty).fill(false)),
   }));
   const {data:insertedItems}=await sb.from('order_items').insert(itemRows).select();
 
@@ -565,11 +570,6 @@ document.getElementById('place-btn').addEventListener('click', async ()=>{
     });
   });
   if (compRows.length) await sb.from('order_item_components').insert(compRows);
-
-  // Update order notes
-  if (document.getElementById('f-notes').value.trim()) {
-    await sb.from('orders').update({notes:document.getElementById('f-notes').value.trim()}).eq('id',order.id);
-  }
 
   document.getElementById('s-num').textContent='#'+padNum(order.order_number);
   document.getElementById('cart-main').style.display='none';
