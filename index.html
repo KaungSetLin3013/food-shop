@@ -12,8 +12,7 @@
   --mustard:#F5C842;--coral:#FF6B5B;--mint:#4ECDC4;--green:#4ade80;
   --text:#1B2340;--text2:#4A5480;--text3:#9AA0C0;
   --border:rgba(255,255,255,.10);--borderL:#E8E2D4;
-  --r:14px;--r2:20px;--r3:28px;
-  --sh:0 4px 20px rgba(0,0,0,.25);
+  --r:14px;--r2:20px;--r3:28px;--sh:0 4px 20px rgba(0,0,0,.25);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -35,7 +34,6 @@ button{cursor:pointer;font-family:inherit;border:none}
 .gate-input::placeholder{color:var(--text3)}
 .gate-btn{width:100%;margin-top:16px;background:linear-gradient(135deg,var(--mustard),#e6b800);color:var(--navy);border-radius:var(--r);padding:15px;font-size:1.1rem;font-weight:900;font-family:'Fredoka',sans-serif;letter-spacing:.02em;box-shadow:0 4px 16px rgba(245,200,66,.35);transition:all .15s}
 .gate-btn:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(245,200,66,.45)}
-.gate-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .gate-err{color:var(--coral);font-size:.82rem;font-weight:700;margin-top:8px;min-height:18px}
 
 /* ── HEADER ─────────────────────────────────────────────── */
@@ -44,19 +42,14 @@ button{cursor:pointer;font-family:inherit;border:none}
 .logo-icon{font-size:1.7rem;line-height:1}
 .logo-name{font-family:'Fredoka',sans-serif;font-size:1.3rem;font-weight:700;color:var(--mustard)}
 .logo-sub{font-size:.7rem;color:var(--text3);font-weight:700}
-.hdr-right{display:flex;align-items:center;gap:10px}
+.hdr-right{display:flex;align-items:center;gap:8px}
 .table-badge{background:var(--navy3);border:1px solid var(--border);border-radius:99px;padding:6px 14px;font-size:.78rem;font-weight:800;color:var(--mustard)}
 .cart-pill{display:flex;align-items:center;gap:7px;background:var(--mustard);color:var(--navy);border-radius:99px;padding:8px 16px;font-weight:800;font-size:.85rem;transition:all .15s}
 .cart-pill:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(245,200,66,.4)}
 .cart-cnt{background:var(--coral);color:#fff;border-radius:99px;min-width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.68rem;padding:0 4px;font-weight:900}
-.my-order-btn{background:var(--navy2);border:1px solid var(--border);color:var(--text3);border-radius:99px;padding:8px 14px;font-size:.78rem;font-weight:700;transition:all .15s}
+.my-order-btn{background:var(--navy2);border:1px solid var(--border);color:var(--text3);border-radius:99px;padding:8px 14px;font-size:.78rem;font-weight:700;transition:all .15s;position:relative}
 .my-order-btn:hover{background:var(--navy3);color:#fff}
-
-/* ── HERO ────────────────────────────────────────────────── */
-.hero{text-align:center;padding:36px 20px 24px;position:relative;z-index:1}
-.hero-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(245,200,66,.12);border:1px solid rgba(245,200,66,.25);border-radius:99px;padding:5px 14px;font-size:.72rem;font-weight:700;color:var(--mustard);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
-.hero h1{font-family:'Fredoka',sans-serif;font-size:clamp(1.8rem,5vw,2.8rem);font-weight:700;line-height:1.1;margin-bottom:6px}
-.hero h1 span{color:var(--mustard)}
+.my-order-dot{position:absolute;top:-2px;right:-2px;width:10px;height:10px;background:var(--coral);border-radius:50%;display:none;border:2px solid var(--navy)}
 
 /* ── TABS ────────────────────────────────────────────────── */
 .tabs-wrap{padding:0 20px 18px;overflow-x:auto;scrollbar-width:none;position:relative;z-index:1}
@@ -67,27 +60,28 @@ button{cursor:pointer;font-family:inherit;border:none}
 .tab.on{background:var(--mustard);border-color:var(--mustard);color:var(--navy);box-shadow:0 3px 12px rgba(245,200,66,.35)}
 
 /* ── MENU GRID ───────────────────────────────────────────── */
+.hero{text-align:center;padding:28px 20px 18px;position:relative;z-index:1}
+.hero-tag{display:inline-flex;align-items:center;gap:6px;background:rgba(245,200,66,.12);border:1px solid rgba(245,200,66,.25);border-radius:99px;padding:5px 14px;font-size:.72rem;font-weight:700;color:var(--mustard);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.hero h1{font-family:'Fredoka',sans-serif;font-size:clamp(1.8rem,5vw,2.6rem);font-weight:700;line-height:1.1;margin-bottom:6px}
+.hero h1 span{color:var(--mustard)}
 .menu-wrap{padding:0 16px 120px;max-width:1100px;margin:0 auto;position:relative;z-index:1}
 .menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
-
 .mcard{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;box-shadow:var(--sh);display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
 .mcard:hover:not(.sold-out){transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.35)}
 .mcard.sold-out{opacity:.5}
-.mcard.is-set{border-color:rgba(245,200,66,.25)}
-
+.mcard.is-set{border-color:rgba(245,200,66,.3);background:linear-gradient(160deg,var(--navy2),rgba(245,200,66,.04))}
 .cimg{width:100%;aspect-ratio:4/3;background:var(--navy3);display:flex;align-items:center;justify-content:center;font-size:3.2rem;position:relative;overflow:hidden}
 .cimg img{width:100%;height:100%;object-fit:cover;transition:transform .3s}
 .mcard:hover .cimg img{transform:scale(1.04)}
 .sold-ribbon{position:absolute;top:10px;right:-26px;background:var(--coral);color:#fff;font-size:.65rem;font-weight:800;padding:4px 32px;transform:rotate(35deg);letter-spacing:.05em;pointer-events:none}
-.set-tag{position:absolute;top:8px;left:8px;background:rgba(245,200,66,.9);color:var(--navy);font-size:.65rem;font-weight:900;padding:3px 8px;border-radius:99px;letter-spacing:.04em}
-
+.set-tag{position:absolute;top:8px;left:8px;background:rgba(245,200,66,.92);color:var(--navy);font-size:.65rem;font-weight:900;padding:3px 8px;border-radius:99px;letter-spacing:.04em}
 .cbody{padding:12px 14px;flex:1;display:flex;flex-direction:column;gap:4px}
 .cname{font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:600;color:#fff;line-height:1.2}
 .cname-jp{font-size:.78rem;color:var(--text3)}
 .cdesc{font-size:.76rem;color:var(--text3);line-height:1.5;margin-top:2px}
-.set-components{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
-.set-comp{background:rgba(245,200,66,.1);border:1px solid rgba(245,200,66,.2);border-radius:99px;padding:2px 8px;font-size:.7rem;color:var(--mustard);font-weight:700}
-
+.set-includes{margin-top:6px;display:flex;flex-direction:column;gap:3px}
+.set-group-label{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:rgba(245,200,66,.6);margin-top:4px}
+.set-comp{font-size:.72rem;color:var(--mustard);font-weight:700}
 .cfooter{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--border);gap:8px;flex-wrap:wrap}
 .cprice{font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:700;color:var(--mustard)}
 .qty-row{display:flex;align-items:center;gap:2px}
@@ -98,6 +92,48 @@ button{cursor:pointer;font-family:inherit;border:none}
 .add-btn:hover:not(:disabled){background:#ff5244;transform:translateY(-1px)}
 .add-btn:disabled{background:var(--navy3);color:var(--text3);cursor:not-allowed}
 
+/* ── SET CUSTOMIZER MODAL ────────────────────────────────── */
+.set-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:600;display:none;align-items:flex-end;justify-content:center;padding:0}
+.set-modal-bg.open{display:flex}
+.set-modal{background:#FFF8EE;color:var(--text);width:100%;max-width:480px;border-radius:var(--r3) var(--r3) 0 0;max-height:90dvh;overflow-y:auto;animation:slideUp2 .28s cubic-bezier(.25,.8,.25,1)}
+@keyframes slideUp2{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sm-hd{background:var(--navy);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;border-radius:var(--r3) var(--r3) 0 0}
+.sm-title{font-family:'Fredoka',sans-serif;font-size:1.2rem;font-weight:700;color:var(--mustard)}
+.sm-price{font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:700;color:#fff}
+.close-sm{background:rgba(255,255,255,.1);color:#fff;border-radius:8px;width:30px;height:30px;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+.close-sm:hover{background:rgba(255,255,255,.2)}
+.sm-body{padding:18px 20px;display:flex;flex-direction:column;gap:18px}
+.sm-group{display:flex;flex-direction:column;gap:10px}
+.sm-group-title{font-size:.75rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--text2)}
+.sm-group-sub{font-size:.73rem;color:var(--text3);margin-top:-6px}
+.sm-options{display:flex;flex-direction:column;gap:8px}
+.sm-option{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--borderL);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:all .15s}
+.sm-option:hover{border-color:var(--mustard);background:#fffdf0}
+.sm-option.selected{border-color:var(--mustard);background:#fff9e0;box-shadow:0 0 0 3px rgba(245,200,66,.15)}
+.sm-option-img{width:40px;height:40px;border-radius:8px;object-fit:cover;background:#f0ece4;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;overflow:hidden}
+.sm-option-img img{width:100%;height:100%;object-fit:cover}
+.sm-option-info{flex:1;min-width:0}
+.sm-option-name{font-weight:800;font-size:.88rem;color:var(--text)}
+.sm-option-jp{font-size:.73rem;color:var(--text2)}
+.sm-radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--borderL);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.sm-option.selected .sm-radio{border-color:var(--mustard);background:var(--mustard)}
+.sm-option.selected .sm-radio::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--navy)}
+.sm-fixed{display:flex;flex-direction:column;gap:6px}
+.sm-fixed-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f7f4ef;border-radius:8px}
+.sm-fixed-img{width:32px;height:32px;border-radius:6px;background:#e8e2d4;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;overflow:hidden}
+.sm-fixed-img img{width:100%;height:100%;object-fit:cover}
+.sm-fixed-name{font-size:.82rem;font-weight:700;color:var(--text2)}
+.sm-footer{padding:0 20px 24px}
+.sm-add-btn{width:100%;background:linear-gradient(135deg,var(--coral),#ff4b3a);color:#fff;border-radius:var(--r);padding:14px;font-size:1rem;font-weight:900;font-family:'Fredoka',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(255,107,91,.4);transition:all .15s}
+.sm-add-btn:hover:not(:disabled){transform:translateY(-1px)}
+.sm-add-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.qty-control{display:flex;align-items:center;gap:10px;justify-content:center;margin-bottom:14px}
+.qty-control-label{font-size:.8rem;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.qty-control-row{display:flex;align-items:center;gap:6px}
+.qcb{width:32px;height:32px;background:#f0ece4;border-radius:8px;font-weight:800;font-size:1rem;color:var(--text);display:flex;align-items:center;justify-content:center;transition:background .12s}
+.qcb:hover{background:var(--mustard)}
+.qcnum{width:32px;text-align:center;font-weight:900;font-size:1.1rem;color:var(--text)}
+
 /* ── CART DRAWER ─────────────────────────────────────────── */
 .cart-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:none;justify-content:flex-end}
 .cart-bg.open{display:flex}
@@ -107,33 +143,33 @@ button{cursor:pointer;font-family:inherit;border:none}
 .cart-hd-title{font-family:'Fredoka',sans-serif;font-size:1.25rem;font-weight:700;color:var(--mustard)}
 .close-c{background:rgba(255,255,255,.1);color:#fff;border-radius:8px;width:30px;height:30px;font-size:.9rem;display:flex;align-items:center;justify-content:center}
 .close-c:hover{background:rgba(255,255,255,.2)}
-
 .cart-items{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:10px}
-.ci{display:flex;align-items:center;gap:10px;background:#fff;border-radius:var(--r);padding:11px 13px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.ci{display:flex;align-items:flex-start;gap:10px;background:#fff;border-radius:var(--r);padding:11px 13px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
 .ci-img{width:44px;height:44px;border-radius:8px;object-fit:cover;background:#f0ece4;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;overflow:hidden}
 .ci-img img{width:100%;height:100%;object-fit:cover}
 .ci-info{flex:1;min-width:0}
 .ci-name{font-weight:800;font-size:.87rem;color:var(--text);line-height:1.2}
 .ci-name-jp{font-size:.73rem;color:var(--text2)}
-.ci-comps{font-size:.71rem;color:var(--text3);margin-top:2px}
-.ci-price{font-size:.75rem;color:var(--text2);margin-top:1px}
-.ci-actions{display:flex;align-items:center;gap:3px;flex-shrink:0}
+.ci-comps{font-size:.71rem;color:#888;margin-top:3px;line-height:1.5}
+.ci-comp-row{display:flex;align-items:center;gap:4px}
+.ci-comp-group{font-size:.65rem;font-weight:800;color:var(--mustard);text-transform:uppercase;letter-spacing:.04em;min-width:36px}
+.ci-price{font-size:.75rem;color:var(--text2);margin-top:2px}
+.ci-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.ci-actions{display:flex;align-items:center;gap:3px}
 .cqb{width:25px;height:25px;background:#f0ece4;border-radius:5px;font-weight:800;font-size:.88rem;color:var(--text);display:flex;align-items:center;justify-content:center}
 .cqb:hover{background:var(--mustard)}
 .cqnum{width:22px;text-align:center;font-weight:800;font-size:.82rem}
-.ci-sub{font-family:'Fredoka',sans-serif;font-weight:700;font-size:.92rem;color:var(--coral);min-width:48px;text-align:right;flex-shrink:0}
-.rm-btn{background:none;color:#ccc;font-size:.78rem;padding:2px 4px;border-radius:4px;margin-left:2px}
+.ci-sub{font-family:'Fredoka',sans-serif;font-weight:700;font-size:.92rem;color:var(--coral)}
+.rm-btn{background:none;color:#ccc;font-size:.78rem;padding:2px 4px;border-radius:4px}
 .rm-btn:hover{background:#ffe5e2;color:var(--coral)}
 .cart-empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text2);padding:40px;text-align:center}
 .cart-empty-state .big{font-size:3rem}
 .cart-empty-state h3{font-weight:800;color:var(--text)}
-
 .rdash{margin:0 18px;border:none;border-top:2px dashed #d8d2c6}
 .totals{padding:12px 18px 0;display:flex;flex-direction:column;gap:5px}
 .trow{display:flex;justify-content:space-between;font-size:.85rem;color:var(--text2)}
 .trow.grand{font-size:1.1rem;font-weight:900;color:var(--text);font-family:'Fredoka',sans-serif;margin-top:5px;padding-top:8px;border-top:2px solid var(--borderL)}
 .trow .amt{font-family:'Fredoka',sans-serif;font-weight:700}
-
 .order-form{padding:14px 18px 22px;display:flex;flex-direction:column;gap:8px}
 .field{display:flex;flex-direction:column;gap:4px}
 .field label{font-size:.73rem;font-weight:800;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
@@ -143,7 +179,7 @@ button{cursor:pointer;font-family:inherit;border:none}
 .place-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,91,.5)}
 .place-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-/* SUCCESS */
+/* ── SUCCESS ────────────────────────────────────────────── */
 .success-screen{display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:50px 28px;text-align:center;flex:1}
 .success-screen.show{display:flex}
 .s-icon{width:72px;height:72px;background:#e8f9f4;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2.2rem;animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}
@@ -154,42 +190,49 @@ button{cursor:pointer;font-family:inherit;border:none}
 .s-track-btn{background:var(--navy);color:var(--mustard);border-radius:var(--r);padding:11px 22px;font-weight:800;font-family:'Fredoka',sans-serif;font-size:.95rem;margin-top:4px;transition:all .15s}
 .s-track-btn:hover{transform:translateY(-1px)}
 .s-again{background:rgba(255,255,255,.15);color:var(--text2);border-radius:var(--r);padding:9px 18px;font-weight:700;font-size:.85rem;transition:all .15s}
-.s-again:hover{background:rgba(0,0,0,.08)}
 
-/* ── MY ORDER STATUS PANEL ───────────────────────────────── */
+/* ── MY ORDERS PANEL ────────────────────────────────────── */
 .order-status-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:400;display:none;justify-content:flex-end}
 .order-status-bg.open{display:flex}
 .order-status-panel{background:#FFF8EE;color:var(--text);width:min(440px,100vw);height:100dvh;display:flex;flex-direction:column;animation:slideR .26s cubic-bezier(.25,.8,.25,1);overflow:hidden}
 .os-hd{background:var(--navy);padding:16px 20px;display:flex;align-items:center;justify-content:space-between}
-.os-hd-title{font-family:'Fredoka',sans-serif;font-size:1.2rem;font-weight:700;color:var(--mustard)}
-.os-body{flex:1;overflow-y:auto;padding:18px}
-.order-block{background:#fff;border-radius:var(--r2);padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.07)}
-.ob-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
-.ob-num{font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy)}
-.ob-time{font-size:.75rem;color:var(--text3)}
-.ob-status{padding:4px 12px;border-radius:99px;font-size:.72rem;font-weight:800;text-transform:capitalize}
+.os-hd-title{font-family:'Fredoka',sans-serif;font-size:1.1rem;font-weight:700;color:var(--mustard)}
+.os-body{flex:1;overflow-y:auto;padding:16px}
+.order-block{background:#fff;border-radius:var(--r2);padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.07);border-left:4px solid transparent}
+.order-block.pending  {border-left-color:#e6b800}
+.order-block.preparing{border-left-color:var(--mint)}
+.order-block.ready    {border-left-color:var(--green)}
+.order-block.done     {border-left-color:#ccc}
+.ob-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.ob-num{font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:700;color:var(--navy)}
+.ob-time{font-size:.72rem;color:var(--text3)}
+.ob-status{padding:4px 12px;border-radius:99px;font-size:.7rem;font-weight:800;text-transform:capitalize}
 .ob-status.pending  {background:rgba(245,200,66,.15);color:#c49400}
 .ob-status.preparing{background:rgba(78,205,196,.15);color:#2a9d8f}
 .ob-status.ready    {background:rgba(74,222,128,.15);color:#16a34a}
 .ob-status.done     {background:rgba(0,0,0,.06);color:var(--text3)}
-.ob-items{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
-.ob-item{display:flex;align-items:center;gap:10px}
-.ob-item-img{width:36px;height:36px;border-radius:7px;background:#f0ece4;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;overflow:hidden}
-.ob-item-img img{width:100%;height:100%;object-fit:cover}
-.ob-item-name{font-size:.85rem;font-weight:700;color:var(--text);flex:1}
-.ob-item-qty{font-size:.8rem;color:var(--text3);margin-left:auto}
-.ob-total{display:flex;justify-content:space-between;font-weight:800;font-size:.9rem;color:var(--text);border-top:1px dashed #e0dbd0;padding-top:8px}
-.ob-total .amt{font-family:'Fredoka',sans-serif;color:var(--coral)}
-.os-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:60px 20px;color:var(--text2);text-align:center}
-.os-empty .big{font-size:3rem}
-.status-stepper{display:flex;align-items:center;gap:0;margin-bottom:12px}
+.status-stepper{display:flex;align-items:center;margin-bottom:12px}
 .step{display:flex;flex-direction:column;align-items:center;flex:1}
 .step-dot{width:22px;height:22px;border-radius:50%;background:#e8e2d4;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:900;color:#aaa;transition:all .3s}
 .step-dot.done-step{background:var(--green);color:#fff}
-.step-dot.active-step{background:var(--mustard);color:var(--navy)}
-.step-label{font-size:.6rem;font-weight:700;color:var(--text3);margin-top:3px;text-align:center}
+.step-dot.active-step{background:var(--mustard);color:var(--navy);animation:stepPulse 1.5s infinite}
+@keyframes stepPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,200,66,.4)}50%{box-shadow:0 0 0 6px rgba(245,200,66,0)}}
+.step-label{font-size:.58rem;font-weight:700;color:var(--text3);margin-top:3px;text-align:center}
 .step-line{flex:1;height:2px;background:#e8e2d4;margin-bottom:16px}
 .step-line.done-line{background:var(--green)}
+.ob-items{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
+.ob-item{display:flex;align-items:center;gap:10px}
+.ob-item-img{width:34px;height:34px;border-radius:7px;background:#f0ece4;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;overflow:hidden}
+.ob-item-img img{width:100%;height:100%;object-fit:cover}
+.ob-item-info{flex:1}
+.ob-item-name{font-size:.84rem;font-weight:700;color:var(--text)}
+.ob-item-comps{font-size:.7rem;color:var(--text3);margin-top:1px}
+.ob-item-qty{font-size:.78rem;color:var(--text3)}
+.ob-total{display:flex;justify-content:space-between;font-weight:800;font-size:.9rem;color:var(--text);border-top:1px dashed #e0dbd0;padding-top:8px}
+.ob-total .amt{font-family:'Fredoka',sans-serif;color:var(--coral)}
+.ready-banner{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:8px;padding:8px 12px;font-size:.8rem;font-weight:700;color:#16a34a;text-align:center;margin-top:8px}
+.os-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:60px 20px;color:var(--text2);text-align:center}
+.os-empty .big{font-size:3rem}
 
 /* ── LOADER ──────────────────────────────────────────────── */
 .loader{display:flex;align-items:center;justify-content:center;padding:60px;grid-column:1/-1}
@@ -198,10 +241,7 @@ button{cursor:pointer;font-family:inherit;border:none}
 .empty-state{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 20px;color:var(--text3);text-align:center;grid-column:1/-1}
 .empty-state .big{font-size:3rem}
 
-@media(max-width:640px){
-  .menu-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-  .menu-wrap{padding:0 12px 100px}
-}
+@media(max-width:640px){.menu-grid{grid-template-columns:repeat(2,1fr);gap:10px}.menu-wrap{padding:0 12px 100px}}
 @media(max-width:380px){.menu-grid{grid-template-columns:1fr}}
 </style>
 </head>
@@ -222,7 +262,7 @@ button{cursor:pointer;font-family:inherit;border:none}
   </div>
 </div>
 
-<!-- MAIN APP (hidden until gate passed) -->
+<!-- MAIN APP -->
 <div id="app" style="display:none">
   <header class="hdr">
     <div class="logo">
@@ -234,10 +274,8 @@ button{cursor:pointer;font-family:inherit;border:none}
     </div>
     <div class="hdr-right">
       <span class="table-badge">🪑 Table <span id="table-display">—</span></span>
-      <button class="my-order-btn" id="my-order-btn">📋 My Orders</button>
-      <button class="cart-pill" id="cart-open-btn">
-        🛒 Cart <span class="cart-cnt" id="cart-cnt">0</span>
-      </button>
+      <button class="my-order-btn" id="my-order-btn">📋 My Orders<div class="my-order-dot" id="ready-dot"></div></button>
+      <button class="cart-pill" id="cart-open-btn">🛒 Cart <span class="cart-cnt" id="cart-cnt">0</span></button>
     </div>
   </header>
 
@@ -246,15 +284,31 @@ button{cursor:pointer;font-family:inherit;border:none}
     <h1>What would you <span>like today?</span></h1>
   </div>
 
-  <div class="tabs-wrap">
-    <div class="tabs" id="tabs">
-      <button class="tab on" data-cat="all">🍽 All</button>
-    </div>
-  </div>
+  <div class="tabs-wrap"><div class="tabs" id="tabs"><button class="tab on" data-cat="all">🍽 All</button></div></div>
+  <div class="menu-wrap"><div class="menu-grid" id="menu-grid"><div class="loader"><div class="spin"></div></div></div></div>
+</div>
 
-  <div class="menu-wrap">
-    <div class="menu-grid" id="menu-grid">
-      <div class="loader"><div class="spin"></div></div>
+<!-- SET CUSTOMIZER BOTTOM SHEET -->
+<div class="set-modal-bg" id="set-modal-bg">
+  <div class="set-modal" id="set-modal">
+    <div class="sm-hd">
+      <span class="sm-title" id="sm-title">Customize Set</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="sm-price" id="sm-price"></span>
+        <button class="close-sm" id="sm-close">✕</button>
+      </div>
+    </div>
+    <div class="sm-body" id="sm-body"></div>
+    <div class="sm-footer">
+      <div class="qty-control">
+        <span class="qty-control-label">Qty</span>
+        <div class="qty-control-row">
+          <button class="qcb" id="sm-qty-dec">−</button>
+          <span class="qcnum" id="sm-qty-num">1</span>
+          <button class="qcb" id="sm-qty-inc">+</button>
+        </div>
+      </div>
+      <button class="sm-add-btn" id="sm-add-btn">+ Add to Cart</button>
     </div>
   </div>
 </div>
@@ -286,7 +340,7 @@ button{cursor:pointer;font-family:inherit;border:none}
             <label>Special Notes (optional)</label>
             <textarea id="f-notes" placeholder="Allergies, no spicy, extra sauce…" maxlength="200"></textarea>
           </div>
-          <button class="place-btn" id="place-btn" disabled>🎉 Place Order for Table <span id="place-table">—</span></button>
+          <button class="place-btn" id="place-btn" disabled>🎉 Place Order — Table <span id="place-table">—</span></button>
         </div>
       </div>
     </div>
@@ -301,7 +355,7 @@ button{cursor:pointer;font-family:inherit;border:none}
       <button class="close-c" id="os-close">✕</button>
     </div>
     <div class="os-body" id="os-body">
-      <div class="os-empty"><div class="big">📋</div><p>Loading orders…</p></div>
+      <div class="os-empty"><div class="big">📋</div><p style="color:var(--text3);font-weight:700">Loading…</p></div>
     </div>
   </div>
 </div>
@@ -312,68 +366,79 @@ button{cursor:pointer;font-family:inherit;border:none}
 import { sb, getSettings, fmt, esc, toast, padNum } from './supabase-config.js';
 
 // ── State ──────────────────────────────────────────────────
-let settings   = {};
-let categories = [];
-let items      = [];
-let setComps   = {};   // setId → [{name, emoji, image}]
-let cart       = [];
-let tableNum   = '';
-let activeCat  = 'all';
+let settings  = {};
+let categories= [];
+let items     = [];
+// setComps[id] = { fixed:[{...}], groups:{ 'Salad':[{...}], 'Soup':[{...}] } }
+let setComps  = {};
+let cart      = [];   // [{cartId, id, name, name_jp, emoji, image_url, price, qty, is_set, choices:{groupName:item}}]
+let tableNum  = '';
+let activeCat = 'all';
+let nextCartId= 1;
+
+// Set customizer state
+let smItem    = null;   // current set item being customized
+let smChoices = {};     // groupName → chosen item object
+let smQty     = 1;
 
 // ── Boot ───────────────────────────────────────────────────
 (async () => {
   settings = await getSettings();
   applyBranding();
-  renderGate();
 })();
 
 function applyBranding() {
   const name = settings.shop_name || 'Festival Shop';
-  const emoji = settings.emoji || '🎪';
-  const tag   = settings.tagline || '';
-  ['gate-emoji','hdr-emoji'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = emoji; });
-  ['gate-name','hdr-name'].forEach(id => { const e = document.getElementById(id); if(e) e.textContent = name; });
-  document.getElementById('gate-tag').textContent = tag ? tag + ' — enter your table number to start.' : 'Enter your table number to start ordering.';
-  const ht = document.getElementById('hdr-tag'); if(ht) ht.textContent = tag;
+  const emoji= settings.emoji || '🎪';
+  const tag  = settings.tagline || '';
+  ['gate-emoji','hdr-emoji'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=emoji;});
+  ['gate-name','hdr-name'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=name;});
+  document.getElementById('gate-tag').textContent = tag
+    ? tag + ' — enter your table number to start.'
+    : 'Enter your table number to start ordering.';
+  const ht=document.getElementById('hdr-tag'); if(ht) ht.textContent=tag;
   document.title = name;
 }
 
 // ── Gate ──────────────────────────────────────────────────
-function renderGate() {}
-
-const gateBtn = document.getElementById('gate-btn');
-const gateIn  = document.getElementById('gate-input');
-const gateErr = document.getElementById('gate-err');
-
-gateIn.addEventListener('keydown', e => { if(e.key==='Enter') gateBtn.click(); });
-gateBtn.addEventListener('click', () => {
-  const val = gateIn.value.trim();
-  if (!val) { gateErr.textContent = 'Please enter your table number.'; return; }
-  tableNum = val;
-  document.getElementById('gate').style.display = 'none';
-  document.getElementById('app').style.display  = 'block';
-  document.getElementById('table-display').textContent = tableNum;
-  document.getElementById('os-table').textContent     = tableNum;
-  document.getElementById('place-table').textContent  = tableNum;
-  gateErr.textContent = '';
+document.getElementById('gate-input').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('gate-btn').click();});
+document.getElementById('gate-btn').addEventListener('click',()=>{
+  const val=document.getElementById('gate-input').value.trim();
+  if(!val){document.getElementById('gate-err').textContent='Please enter your table number.';return;}
+  tableNum=val;
+  document.getElementById('gate').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('table-display').textContent=tableNum;
+  document.getElementById('os-table').textContent=tableNum;
+  document.getElementById('place-table').textContent=tableNum;
   loadMenu();
+  startOrderPolling();
 });
 
 // ── Load Menu ──────────────────────────────────────────────
 async function loadMenu() {
-  const [{ data: cats }, { data: its }, { data: comps }] = await Promise.all([
+  const [{data:cats},{data:its},{data:comps}]=await Promise.all([
     sb.from('categories').select('*').order('sort_order'),
     sb.from('menu_items').select('*').order('created_at'),
-    sb.from('set_components').select('*, component:component_id(name, name_jp, emoji, image_url)'),
+    sb.from('set_components').select('*, component:component_id(id,name,name_jp,emoji,image_url)'),
   ]);
-  categories = cats || [];
-  items      = its  || [];
+  categories=cats||[];
+  items=its||[];
 
-  // Build setComps map
-  setComps = {};
-  (comps || []).forEach(c => {
-    if (!setComps[c.set_id]) setComps[c.set_id] = [];
-    setComps[c.set_id].push(c.component);
+  // Build setComps map with groups
+  setComps={};
+  (comps||[]).forEach(c=>{
+    if(!setComps[c.set_id]) setComps[c.set_id]={fixed:[],groups:{}};
+    const comp={...c.component, sort_order:c.sort_order};
+    if(!c.component_group){
+      // Fixed item always included
+      setComps[c.set_id].fixed.push(comp);
+    } else {
+      // Choice group
+      if(!setComps[c.set_id].groups[c.component_group])
+        setComps[c.set_id].groups[c.component_group]=[];
+      setComps[c.set_id].groups[c.component_group].push(comp);
+    }
   });
 
   renderTabs();
@@ -381,38 +446,54 @@ async function loadMenu() {
 }
 
 // ── Tabs ───────────────────────────────────────────────────
-function renderTabs() {
-  const tabs = document.getElementById('tabs');
-  tabs.innerHTML = `<button class="tab on" data-cat="all">🍽 All</button>`;
-  categories.forEach(c => {
-    const b = document.createElement('button');
-    b.className = 'tab'; b.dataset.cat = c.id; b.textContent = c.name;
+function renderTabs(){
+  const tabs=document.getElementById('tabs');
+  tabs.innerHTML=`<button class="tab on" data-cat="all">🍽 All</button>`;
+  categories.forEach(c=>{
+    const b=document.createElement('button');
+    b.className='tab';b.dataset.cat=c.id;b.textContent=c.name;
     tabs.appendChild(b);
   });
-  tabs.addEventListener('click', e => {
-    const b = e.target.closest('.tab'); if(!b) return;
-    activeCat = b.dataset.cat;
-    tabs.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.cat===activeCat));
+  tabs.addEventListener('click',e=>{
+    const b=e.target.closest('.tab');if(!b)return;
+    activeCat=b.dataset.cat;
+    tabs.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.cat===activeCat));
     renderGrid();
   });
 }
 
 // ── Menu Grid ──────────────────────────────────────────────
-function renderGrid() {
-  const grid = document.getElementById('menu-grid');
-  const sym  = settings.currency || '¥';
-  let list   = activeCat==='all' ? items : items.filter(i=>i.category_id===activeCat);
+function renderGrid(){
+  const grid=document.getElementById('menu-grid');
+  const sym=settings.currency||'¥';
+  const list=activeCat==='all'?items:items.filter(i=>i.category_id===activeCat);
 
-  if (!list.length) {
-    grid.innerHTML = `<div class="empty-state"><div class="big">🍽</div><p style="font-weight:700;opacity:.5">No items here</p></div>`;
+  if(!list.length){
+    grid.innerHTML=`<div class="empty-state"><div class="big">🍽</div><p style="font-weight:700;opacity:.5">No items here</p></div>`;
     return;
   }
 
-  grid.innerHTML = list.map(it => {
-    const comps = setComps[it.id] || [];
-    const imgEl = it.image_url
-      ? `<img src="${esc(it.image_url)}" alt="${esc(it.name)}" loading="lazy"/>`
-      : `<span>${esc(it.emoji||'🍽')}</span>`;
+  grid.innerHTML=list.map(it=>{
+    const sc=setComps[it.id]||{fixed:[],groups:{}};
+    const groupNames=Object.keys(sc.groups);
+    const imgEl=it.image_url
+      ?`<img src="${esc(it.image_url)}" alt="${esc(it.name)}" loading="lazy"/>`
+      :`<span>${esc(it.emoji||'🍽')}</span>`;
+
+    // Set menu preview in card
+    let setPreview='';
+    if(it.is_set){
+      setPreview='<div class="set-includes">';
+      if(sc.fixed.length){
+        setPreview+=sc.fixed.map(c=>`<div class="set-comp">${esc(c.emoji||'')} ${esc(c.name_jp||c.name)}</div>`).join('');
+      }
+      groupNames.forEach(g=>{
+        const opts=sc.groups[g];
+        setPreview+=`<div class="set-group-label">Choose ${esc(g)}</div>`;
+        setPreview+=opts.map(c=>`<div class="set-comp" style="opacity:.7">${esc(c.emoji||'')} ${esc(c.name_jp||c.name)}</div>`).join('');
+      });
+      setPreview+='</div>';
+    }
 
     return `
       <div class="mcard ${it.available?'':'sold-out'} ${it.is_set?'is-set':''}">
@@ -425,210 +506,371 @@ function renderGrid() {
           <div class="cname">${esc(it.name)}</div>
           ${it.name_jp?`<div class="cname-jp">${esc(it.name_jp)}</div>`:''}
           ${it.description?`<div class="cdesc">${esc(it.description)}</div>`:''}
-          ${comps.length?`<div class="set-components">${comps.map(c=>`<span class="set-comp">${esc(c.emoji||'')} ${esc(c.name_jp||c.name)}</span>`).join('')}</div>`:''}
+          ${setPreview}
         </div>
         <div class="cfooter">
           <div class="cprice">${fmt(it.price,sym)}</div>
+          ${!it.is_set?`
           <div class="qty-row">
             <button class="qb" data-id="${it.id}" data-d="-1">−</button>
             <span class="qnum" id="q-${it.id}">1</span>
             <button class="qb" data-id="${it.id}" data-d="1">+</button>
-          </div>
+          </div>`:''}
           <button class="add-btn" data-id="${it.id}" ${it.available?'':'disabled'}>
-            ${it.available?'+ Add':'Sold out'}
+            ${it.available?(it.is_set?'🍱 Choose':'+ Add'):'Sold out'}
           </button>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 
-  grid.querySelectorAll('.qb').forEach(b =>
-    b.addEventListener('click', () => adjQty(b.dataset.id, parseInt(b.dataset.d))));
-  grid.querySelectorAll('.add-btn:not(:disabled)').forEach(b =>
-    b.addEventListener('click', () => addItem(b.dataset.id)));
+  grid.querySelectorAll('.qb').forEach(b=>b.addEventListener('click',()=>adjQty(b.dataset.id,parseInt(b.dataset.d))));
+  grid.querySelectorAll('.add-btn:not(:disabled)').forEach(b=>b.addEventListener('click',()=>{
+    const it=items.find(x=>x.id===b.dataset.id);
+    if(!it)return;
+    if(it.is_set) openSetCustomizer(it);
+    else addSimpleItem(it);
+  }));
 }
 
-function adjQty(id, d) {
-  const el = document.getElementById('q-'+id);
-  if (el) el.textContent = Math.max(1, Math.min(20, parseInt(el.textContent)+d));
+function adjQty(id,d){
+  const el=document.getElementById('q-'+id);
+  if(el)el.textContent=Math.max(1,Math.min(20,parseInt(el.textContent)+d));
 }
 
-// ── Cart ───────────────────────────────────────────────────
-function addItem(id) {
-  const it  = items.find(x=>x.id===id);
-  const qty = parseInt(document.getElementById('q-'+id)?.textContent||'1');
-  if (!it) return;
-  const ex = cart.find(e=>e.id===id);
-  if (ex) ex.qty += qty;
-  else cart.push({
-    id: it.id, name: it.name, name_jp: it.name_jp||'',
-    emoji: it.emoji||'🍽', image_url: it.image_url||'',
-    price: parseFloat(it.price), qty,
-    is_set: it.is_set||false,
-    components: (setComps[it.id]||[]).map(c=>({name:c.name_jp||c.name,emoji:c.emoji||'',image:c.image_url||''})),
+// ── Simple item add ────────────────────────────────────────
+function addSimpleItem(it){
+  const qty=parseInt(document.getElementById('q-'+it.id)?.textContent||'1');
+  // Each add creates a new cart line (so same item can appear multiple times with diff notes)
+  cart.push({
+    cartId: nextCartId++,
+    id:it.id, name:it.name, name_jp:it.name_jp||'',
+    emoji:it.emoji||'🍽', image_url:it.image_url||'',
+    price:parseFloat(it.price), qty,
+    is_set:false, choices:{},
   });
-  const qel = document.getElementById('q-'+id); if(qel) qel.textContent='1';
+  const qel=document.getElementById('q-'+it.id);if(qel)qel.textContent='1';
   refreshBadge(); renderCartItems();
-  toast('Added! 🛒', 'success');
+  toast('Added to cart! 🛒','success');
 }
 
-function cartTotal() {
-  const sub = cart.reduce((s,e)=>s+e.price*e.qty,0);
-  const tax  = sub*(parseFloat(settings.tax||0)/100);
-  return { sub, tax, total: sub+tax };
-}
+// ── Set customizer ─────────────────────────────────────────
+function openSetCustomizer(it){
+  smItem=it;
+  smChoices={};
+  smQty=1;
+  document.getElementById('sm-qty-num').textContent='1';
 
-function refreshBadge() {
-  document.getElementById('cart-cnt').textContent = cart.reduce((s,e)=>s+e.qty,0);
-}
+  const sc=setComps[it.id]||{fixed:[],groups:{}};
+  const groupNames=Object.keys(sc.groups);
+  const sym=settings.currency||'¥';
 
-function renderCartItems() {
-  const listEl  = document.getElementById('cart-items');
-  const totEl   = document.getElementById('cart-totals');
-  const placeEl = document.getElementById('place-btn');
-  const sym     = settings.currency||'¥';
+  document.getElementById('sm-title').textContent=it.name_jp||it.name;
+  document.getElementById('sm-price').textContent=fmt(it.price,sym);
 
-  if (!cart.length) {
-    listEl.innerHTML=`<div class="cart-empty-state"><div class="big">🛒</div><h3>Cart is empty</h3><p>Add items from the menu!</p></div>`;
-    totEl.innerHTML=''; placeEl.disabled=true; return;
+  let html='';
+
+  // Fixed components
+  if(sc.fixed.length){
+    html+=`<div class="sm-group">
+      <div class="sm-group-title">Included in set</div>
+      <div class="sm-fixed">
+        ${sc.fixed.map(c=>{
+          const img=c.image_url
+            ?`<img src="${esc(c.image_url)}" loading="lazy"/>`
+            :(c.emoji||'🍽');
+          return `<div class="sm-fixed-item">
+            <div class="sm-fixed-img">${img}</div>
+            <div class="sm-fixed-name">${esc(c.emoji||'')} ${esc(c.name_jp||c.name)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
   }
 
-  listEl.innerHTML = cart.map(e=>`
-    <div class="ci">
-      <div class="ci-img">
-        ${e.image_url?`<img src="${esc(e.image_url)}" loading="lazy"/>`:esc(e.emoji)}
+  // Choice groups
+  groupNames.forEach(g=>{
+    const opts=sc.groups[g];
+    html+=`<div class="sm-group" data-group="${esc(g)}">
+      <div class="sm-group-title">Choose your ${esc(g)}</div>
+      <div class="sm-group-sub">Pick one option</div>
+      <div class="sm-options">
+        ${opts.map(c=>{
+          const img=c.image_url
+            ?`<img src="${esc(c.image_url)}" loading="lazy"/>`
+            :(c.emoji||'🍽');
+          return `<div class="sm-option" data-group="${esc(g)}" data-cid="${c.id}"
+              data-cname="${esc(c.name_jp||c.name)}" data-cemoji="${esc(c.emoji||'')}" data-cimage="${esc(c.image_url||'')}">
+            <div class="sm-option-img">${img}</div>
+            <div class="sm-option-info">
+              <div class="sm-option-name">${esc(c.name_jp||c.name)}</div>
+              ${c.name&&c.name_jp?`<div class="sm-option-jp">${esc(c.name)}</div>`:''}
+            </div>
+            <div class="sm-radio"></div>
+          </div>`;
+        }).join('')}
       </div>
-      <div class="ci-info">
-        <div class="ci-name">${esc(e.name)}</div>
-        ${e.name_jp?`<div class="ci-name-jp">${esc(e.name_jp)}</div>`:''}
-        ${e.components?.length?`<div class="ci-comps">${e.components.map(c=>esc(c.emoji+' '+c.name)).join(' · ')}</div>`:''}
-        <div class="ci-price">${fmt(e.price,sym)} each</div>
-      </div>
-      <div class="ci-actions">
-        <button class="cqb" data-id="${e.id}" data-d="-1">−</button>
-        <span class="cqnum">${e.qty}</span>
-        <button class="cqb" data-id="${e.id}" data-d="1">+</button>
-        <button class="rm-btn" data-rm="${e.id}">🗑</button>
-      </div>
-      <div class="ci-sub">${fmt(e.price*e.qty,sym)}</div>
-    </div>
-  `).join('');
+    </div>`;
+  });
+
+  document.getElementById('sm-body').innerHTML=html;
+
+  // Wire option clicks
+  document.querySelectorAll('.sm-option').forEach(opt=>{
+    opt.addEventListener('click',()=>{
+      const g=opt.dataset.group;
+      // Deselect others in same group
+      document.querySelectorAll(`.sm-option[data-group="${g}"]`).forEach(x=>x.classList.remove('selected'));
+      opt.classList.add('selected');
+      smChoices[g]={
+        id:opt.dataset.cid,
+        name:opt.dataset.cname,
+        emoji:opt.dataset.cemoji,
+        image:opt.dataset.cimage,
+      };
+      updateSmAddBtn(groupNames);
+    });
+  });
+
+  updateSmAddBtn(groupNames);
+  document.getElementById('set-modal-bg').classList.add('open');
+}
+
+function updateSmAddBtn(groupNames){
+  const allChosen=groupNames.every(g=>smChoices[g]);
+  const btn=document.getElementById('sm-add-btn');
+  btn.disabled=!allChosen;
+  const missing=groupNames.filter(g=>!smChoices[g]);
+  btn.textContent=allChosen
+    ?`+ Add ${smQty > 1 ? '(×'+smQty+') ' : ''}to Cart`
+    :`Choose your ${missing[0]}`;
+}
+
+// Qty in customizer
+document.getElementById('sm-qty-dec').addEventListener('click',()=>{
+  smQty=Math.max(1,smQty-1);
+  document.getElementById('sm-qty-num').textContent=smQty;
+  const groupNames=Object.keys(setComps[smItem?.id]?.groups||{});
+  updateSmAddBtn(groupNames);
+});
+document.getElementById('sm-qty-inc').addEventListener('click',()=>{
+  smQty=Math.min(20,smQty+1);
+  document.getElementById('sm-qty-num').textContent=smQty;
+  const groupNames=Object.keys(setComps[smItem?.id]?.groups||{});
+  updateSmAddBtn(groupNames);
+});
+
+document.getElementById('sm-add-btn').addEventListener('click',()=>{
+  if(!smItem)return;
+  const sc=setComps[smItem.id]||{fixed:[],groups:{}};
+  cart.push({
+    cartId: nextCartId++,
+    id:smItem.id, name:smItem.name, name_jp:smItem.name_jp||'',
+    emoji:smItem.emoji||'🍱', image_url:smItem.image_url||'',
+    price:parseFloat(smItem.price), qty:smQty,
+    is_set:true,
+    fixed:sc.fixed.map(c=>({name:c.name_jp||c.name,emoji:c.emoji||'',image:c.image_url||''})),
+    choices:{...smChoices},
+  });
+  document.getElementById('set-modal-bg').classList.remove('open');
+  refreshBadge(); renderCartItems();
+  toast('Set added to cart! 🍱','success');
+});
+
+document.getElementById('sm-close').addEventListener('click',()=>document.getElementById('set-modal-bg').classList.remove('open'));
+document.getElementById('set-modal-bg').addEventListener('click',e=>{if(e.target===document.getElementById('set-modal-bg'))document.getElementById('set-modal-bg').classList.remove('open');});
+
+// ── Cart ───────────────────────────────────────────────────
+function cartTotal(){
+  const sub=cart.reduce((s,e)=>s+e.price*e.qty,0);
+  const tax=sub*(parseFloat(settings.tax||0)/100);
+  return {sub,tax,total:sub+tax};
+}
+
+function refreshBadge(){
+  document.getElementById('cart-cnt').textContent=cart.reduce((s,e)=>s+e.qty,0);
+}
+
+function renderCartItems(){
+  const listEl=document.getElementById('cart-items');
+  const totEl =document.getElementById('cart-totals');
+  const placeEl=document.getElementById('place-btn');
+  const sym=settings.currency||'¥';
+
+  if(!cart.length){
+    listEl.innerHTML=`<div class="cart-empty-state"><div class="big">🛒</div><h3>Cart is empty</h3><p>Pick something from the menu!</p></div>`;
+    totEl.innerHTML='';placeEl.disabled=true;return;
+  }
+
+  listEl.innerHTML=cart.map(e=>{
+    // Build choice lines
+    let compsHtml='';
+    if(e.is_set){
+      // Fixed items
+      if(e.fixed?.length){
+        compsHtml+=e.fixed.map(c=>`<div class="ci-comp-row"><span style="font-size:.75rem">${esc(c.emoji)}</span><span style="font-size:.72rem;color:#888">${esc(c.name)}</span></div>`).join('');
+      }
+      // Choices
+      Object.entries(e.choices||{}).forEach(([g,c])=>{
+        compsHtml+=`<div class="ci-comp-row"><span class="ci-comp-group">${esc(g)}:</span><span style="font-size:.72rem">${esc(c.emoji)} ${esc(c.name)}</span></div>`;
+      });
+      if(compsHtml) compsHtml=`<div class="ci-comps">${compsHtml}</div>`;
+    }
+
+    const img=e.image_url?`<img src="${esc(e.image_url)}" loading="lazy"/>`:esc(e.emoji);
+    return `
+      <div class="ci">
+        <div class="ci-img">${img}</div>
+        <div class="ci-info">
+          <div class="ci-name">${esc(e.name)}</div>
+          ${e.name_jp?`<div class="ci-name-jp">${esc(e.name_jp)}</div>`:''}
+          ${compsHtml}
+          <div class="ci-price">${fmt(e.price,sym)} × ${e.qty}</div>
+        </div>
+        <div class="ci-right">
+          <div class="ci-actions">
+            <button class="cqb" data-cid="${e.cartId}" data-d="-1">−</button>
+            <span class="cqnum">${e.qty}</span>
+            <button class="cqb" data-cid="${e.cartId}" data-d="1">+</button>
+            <button class="rm-btn" data-rm="${e.cartId}">🗑</button>
+          </div>
+          <div class="ci-sub">${fmt(e.price*e.qty,sym)}</div>
+        </div>
+      </div>`;
+  }).join('');
 
   listEl.querySelectorAll('.cqb').forEach(b=>b.addEventListener('click',()=>{
-    const ex=cart.find(x=>x.id===b.dataset.id); if(!ex) return;
-    ex.qty=Math.max(1,ex.qty+parseInt(b.dataset.d));
-    refreshBadge(); renderCartItems();
+    const entry=cart.find(x=>x.cartId===parseInt(b.dataset.cid));if(!entry)return;
+    entry.qty=Math.max(1,entry.qty+parseInt(b.dataset.d));
+    refreshBadge();renderCartItems();
   }));
   listEl.querySelectorAll('.rm-btn').forEach(b=>b.addEventListener('click',()=>{
-    cart=cart.filter(x=>x.id!==b.dataset.rm); refreshBadge(); renderCartItems();
+    cart=cart.filter(x=>x.cartId!==parseInt(b.dataset.rm));
+    refreshBadge();renderCartItems();
   }));
 
   const {sub,tax,total}=cartTotal();
   totEl.innerHTML=`
     <div class="trow"><span>Subtotal</span><span class="amt">${fmt(sub,sym)}</span></div>
     ${parseFloat(settings.tax||0)>0?`<div class="trow"><span>Tax (${settings.tax}%)</span><span class="amt">${fmt(Math.round(tax),sym)}</span></div>`:''}
-    <div class="trow grand"><span>Total</span><span class="amt">${fmt(Math.round(total),sym)}</span></div>
-  `;
+    <div class="trow grand"><span>Total</span><span class="amt">${fmt(Math.round(total),sym)}</span></div>`;
   placeEl.disabled=false;
 }
 
 // ── Place Order ────────────────────────────────────────────
-document.getElementById('place-btn').addEventListener('click', async ()=>{
-  if (!cart.length) return;
+document.getElementById('place-btn').addEventListener('click',async()=>{
+  if(!cart.length)return;
   const btn=document.getElementById('place-btn');
-  btn.disabled=true; btn.textContent='Placing order…';
+  btn.disabled=true;btn.textContent='Placing order…';
 
   const {total}=cartTotal();
   const notes=document.getElementById('f-notes').value.trim()||null;
+
   const {data:order,error}=await sb.from('orders').insert({
-    table_num: tableNum, status:'pending', total:Math.round(total), notes,
+    table_num:tableNum,status:'pending',total:Math.round(total),notes,
   }).select().single();
 
-  if (error) { toast('Error: '+error.message,'error'); btn.disabled=false; btn.innerHTML=`🎉 Place Order for Table <span id="place-table">${tableNum}</span>`; return; }
+  if(error){toast('Error: '+error.message,'error');btn.disabled=false;btn.innerHTML=`🎉 Place Order — Table <span id="place-table">${tableNum}</span>`;return;}
 
   // Insert order items
   const itemRows=cart.map(e=>({
-    order_id:     order.id,
-    menu_item_id: e.id,
-    item_name:    e.name,
-    item_name_jp: e.name_jp || null,
-    item_emoji:   e.emoji,
-    item_image:   e.image_url || null,
-    is_set:       e.is_set || false,
-    quantity:     e.qty,
-    unit_price:   e.price,
-    prep_status:  JSON.stringify(Array(e.qty).fill(false)),
+    order_id:    order.id,
+    menu_item_id:e.id,
+    item_name:   e.name,
+    item_name_jp:e.name_jp||null,
+    item_emoji:  e.emoji,
+    item_image:  e.image_url||null,
+    is_set:      e.is_set||false,
+    quantity:    e.qty,
+    unit_price:  e.price,
+    prep_status: JSON.stringify(Array(e.qty).fill(false)),
   }));
   const {data:insertedItems}=await sb.from('order_items').insert(itemRows).select();
 
-  // Insert set components
+  // Insert set component snapshots (fixed + chosen)
   const compRows=[];
   (insertedItems||[]).forEach((oi,i)=>{
-    const cartEntry=cart[i];
-    (cartEntry.components||[]).forEach(c=>{
+    const ce=cart[i];
+    if(!ce.is_set)return;
+    // Fixed items
+    (ce.fixed||[]).forEach(c=>{
+      compRows.push({order_item_id:oi.id,component_name:c.name,component_emoji:c.emoji,component_image:c.image||null});
+    });
+    // Choices
+    Object.entries(ce.choices||{}).forEach(([g,c])=>{
       compRows.push({order_item_id:oi.id,component_name:c.name,component_emoji:c.emoji,component_image:c.image||null});
     });
   });
-  if (compRows.length) await sb.from('order_item_components').insert(compRows);
+  if(compRows.length)await sb.from('order_item_components').insert(compRows);
 
-  document.getElementById('s-num').textContent='#'+padNum(order.order_number);
+  // ✅ Clear cart, show success, open my orders
+  const orderNum=order.order_number;
+  cart=[];refreshBadge();
+  document.getElementById('s-num').textContent='#'+padNum(orderNum);
   document.getElementById('cart-main').style.display='none';
   document.getElementById('success-screen').classList.add('show');
-  cart=[]; refreshBadge();
   toast('Order placed! 🎉','success');
 });
 
+// After order — go straight to My Orders
+document.getElementById('s-track-btn').addEventListener('click',()=>{
+  document.getElementById('cart-bg').classList.remove('open');
+  resetCartPanel();
+  openMyOrders();
+});
 document.getElementById('s-again').addEventListener('click',()=>{
-  document.getElementById('success-screen').classList.remove('show');
-  document.getElementById('cart-main').style.display='flex';
-  document.getElementById('place-btn').innerHTML=`🎉 Place Order for Table <span id="place-table">${tableNum}</span>`;
-  document.getElementById('place-btn').disabled=true;
-  document.getElementById('f-notes').value='';
-  renderCartItems();
+  resetCartPanel();
   document.getElementById('cart-bg').classList.remove('open');
 });
 
-document.getElementById('s-track-btn').addEventListener('click',()=>{
-  document.getElementById('cart-bg').classList.remove('open');
-  openMyOrders();
-});
+function resetCartPanel(){
+  document.getElementById('success-screen').classList.remove('show');
+  document.getElementById('cart-main').style.display='flex';
+  document.getElementById('f-notes').value='';
+  document.getElementById('place-btn').innerHTML=`🎉 Place Order — Table <span id="place-table">${tableNum}</span>`;
+  document.getElementById('place-btn').disabled=true;
+  renderCartItems();
+}
 
 // ── Cart open/close ────────────────────────────────────────
 document.getElementById('cart-open-btn').addEventListener('click',()=>{document.getElementById('cart-bg').classList.add('open');renderCartItems();});
 document.getElementById('cart-close').addEventListener('click',()=>document.getElementById('cart-bg').classList.remove('open'));
 document.getElementById('cart-bg').addEventListener('click',e=>{if(e.target===document.getElementById('cart-bg'))document.getElementById('cart-bg').classList.remove('open');});
 
-// ── My Orders Panel ────────────────────────────────────────
-document.getElementById('my-order-btn').addEventListener('click', openMyOrders);
+// ── My Orders ──────────────────────────────────────────────
+document.getElementById('my-order-btn').addEventListener('click',openMyOrders);
 document.getElementById('os-close').addEventListener('click',()=>document.getElementById('os-bg').classList.remove('open'));
 document.getElementById('os-bg').addEventListener('click',e=>{if(e.target===document.getElementById('os-bg'))document.getElementById('os-bg').classList.remove('open');});
 
-async function openMyOrders() {
+async function openMyOrders(){
   document.getElementById('os-bg').classList.add('open');
   await renderMyOrders();
 }
 
-async function renderMyOrders() {
+async function renderMyOrders(){
   const body=document.getElementById('os-body');
-  const sym =settings.currency||'¥';
-  body.innerHTML='<div class="os-empty"><div class="spin"></div></div>';
+  const sym=settings.currency||'¥';
+  body.innerHTML='<div class="os-empty"><div class="spin" style="border-top-color:var(--mustard)"></div></div>';
 
   const {data:orders}=await sb.from('orders')
-    .select('*, order_items(*, order_item_components(component_name,component_emoji))')
+    .select('*, order_items(*, order_item_components(component_name,component_emoji,component_image))')
     .eq('table_num',tableNum)
+    .eq('checked_out',false)
     .neq('status','cancelled')
     .order('created_at',{ascending:false});
 
-  if (!orders?.length) {
-    body.innerHTML='<div class="os-empty"><div class="big">📋</div><p style="font-weight:700;color:var(--text3)">No orders for this table yet</p></div>';
+  if(!orders?.length){
+    body.innerHTML='<div class="os-empty"><div class="big">📋</div><p style="font-weight:700;color:var(--text3)">No orders for Table '+esc(tableNum)+' yet</p></div>';
     return;
   }
 
   const STEPS=['pending','preparing','ready','done'];
+  let hasReady=false;
+
   body.innerHTML=orders.map(o=>{
     const si=STEPS.indexOf(o.status);
+    if(o.status==='ready')hasReady=true;
     return `
-      <div class="order-block">
+      <div class="order-block ${o.status}">
         <div class="ob-top">
           <div><div class="ob-num">#${padNum(o.order_number)}</div><div class="ob-time">${timeAgo(o.created_at)}</div></div>
           <div class="ob-status ${o.status}">${o.status}</div>
@@ -639,37 +881,54 @@ async function renderMyOrders() {
               <div class="step-dot ${i<si?'done-step':i===si?'active-step':''}">${i<si?'✓':i+1}</div>
               <div class="step-label">${{pending:'Received',preparing:'Cooking',ready:'Ready!',done:'Done'}[s]}</div>
             </div>
-            ${i<STEPS.length-1?`<div class="step-line ${i<si?'done-line':''}"></div>`:''}
-          `).join('')}
+            ${i<STEPS.length-1?`<div class="step-line ${i<si?'done-line':''}"></div>`:''}`
+          ).join('')}
         </div>
         <div class="ob-items">
-          ${(o.order_items||[]).map(oi=>`
-            <div class="ob-item">
-              <div class="ob-item-img">
-                ${oi.item_image?`<img src="${esc(oi.item_image)}" loading="lazy"/>`:(oi.item_emoji||'🍽')}
+          ${(o.order_items||[]).map(oi=>{
+            const img=oi.item_image?`<img src="${esc(oi.item_image)}" loading="lazy"/>`:esc(oi.item_emoji||'🍽');
+            const comps=(oi.order_item_components||[]).map(c=>esc((c.component_emoji||'')+' '+c.component_name)).join(' · ');
+            return `<div class="ob-item">
+              <div class="ob-item-img">${img}</div>
+              <div class="ob-item-info">
+                <div class="ob-item-name">${esc(oi.item_name_jp||oi.item_name)}</div>
+                ${comps?`<div class="ob-item-comps">${comps}</div>`:''}
               </div>
-              <div class="ob-item-name">${esc(oi.item_name_jp||oi.item_name)}</div>
               <div class="ob-item-qty">×${oi.quantity}</div>
-            </div>
-            ${(oi.order_item_components||[]).length?`<div style="font-size:.72rem;color:var(--text3);margin-left:46px;margin-top:-4px">Contains: ${oi.order_item_components.map(c=>esc(c.component_emoji+' '+c.component_name)).join(', ')}</div>`:''}
-          `).join('')}
+            </div>`;
+          }).join('')}
         </div>
         <div class="ob-total"><span>Total</span><span class="amt">${fmt(o.total,sym)}</span></div>
-        ${o.status==='ready'?'<div style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);border-radius:8px;padding:8px 12px;font-size:.8rem;font-weight:700;color:#16a34a;text-align:center;margin-top:8px">🔔 Your order is ready! Please collect at the counter.</div>':''}
-      </div>
-    `;
+        ${o.status==='ready'?'<div class="ready-banner">🔔 Your order is ready! Please collect at the counter.</div>':''}
+      </div>`;
   }).join('');
+
+  // Show/hide dot on button
+  document.getElementById('ready-dot').style.display=hasReady?'block':'none';
 }
 
-function timeAgo(iso) {
+// ── Poll for order status changes ──────────────────────────
+function startOrderPolling(){
+  // Poll every 20s — updates the dot on My Orders button
+  setInterval(async()=>{
+    if(!tableNum)return;
+    const {data}=await sb.from('orders')
+      .select('status')
+      .eq('table_num',tableNum)
+      .eq('checked_out',false)
+      .eq('status','ready');
+    const hasReady=data&&data.length>0;
+    document.getElementById('ready-dot').style.display=hasReady?'block':'none';
+    // If panel is open, refresh it
+    if(document.getElementById('os-bg').classList.contains('open'))renderMyOrders();
+  },20000);
+}
+
+// ── Helpers ────────────────────────────────────────────────
+function timeAgo(iso){
   const s=Math.floor((Date.now()-new Date(iso))/1000);
-  if(s<60) return s+'s ago'; if(s<3600) return Math.floor(s/60)+'m ago'; return Math.floor(s/3600)+'h ago';
+  if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';return Math.floor(s/3600)+'h ago';
 }
-
-// Auto-refresh my orders every 20s while panel is open
-setInterval(()=>{
-  if(document.getElementById('os-bg').classList.contains('open')) renderMyOrders();
-},20000);
 </script>
 </body>
 </html>
