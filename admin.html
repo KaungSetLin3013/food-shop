@@ -677,14 +677,33 @@ window.openItemModal = async function(id) {
   // Get set component options (non-set items)
   const compOptions=menuItems.filter(x=>!x.is_set);
 
-  // Get existing set components if editing
-  let existingComps=[];
+  // Get existing set components (with group) if editing
+  let existingComps=[];   // [{component_id, component_group}]
   if (id && it?.is_set) {
-    const {data}=await sb.from('set_components').select('component_id').eq('set_id',id);
-    existingComps=(data||[]).map(c=>c.component_id);
+    const {data}=await sb.from('set_components').select('component_id,component_group,sort_order').eq('set_id',id).order('sort_order');
+    existingComps=data||[];
   }
 
   const catOpts=categories.map(c=>`<option value="${c.id}" ${it?.category_id===c.id?'selected':''}>${esc(c.name)}</option>`).join('');
+
+  // Build set-component rows with group input
+  const compRows=compOptions.map(ci=>{
+    const ex=existingComps.find(e=>e.component_id===ci.id);
+    return `
+      <div class="set-comp-item" style="flex-direction:column;align-items:flex-start;gap:5px;padding:8px 10px">
+        <label class="af-check" style="margin:0">
+          <input type="checkbox" class="sc-check" id="sc-${ci.id}" value="${ci.id}" ${ex?'checked':''}/>
+          <span>${esc(ci.emoji||'🍽')} ${esc(ci.name_jp||ci.name)}</span>
+        </label>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:22px" id="sc-group-row-${ci.id}" style="display:${ex?'flex':'none'}">
+          <span style="font-size:.7rem;color:var(--text3);font-weight:700">Group:</span>
+          <input id="sc-group-${ci.id}" type="text"
+            value="${esc(ex?.component_group||'')}"
+            placeholder="e.g. Salad, Soup (blank = always included)"
+            style="flex:1;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--navy);color:#fff;font-size:.78rem;font-family:'Nunito',sans-serif"/>
+        </div>
+      </div>`;
+  }).join('');
 
   const bodyHTML=`
     <div class="fgrid">
@@ -702,18 +721,9 @@ window.openItemModal = async function(id) {
       <div class="chk-label"><input type="checkbox" id="mi-avail" ${!it||it.available?'checked':''}/> Available for ordering</div>
       <div class="chk-label"><input type="checkbox" id="mi-set" ${it?.is_set?'checked':''} onchange="toggleSetComps(this.checked)"/> This is a SET menu</div>
       <div class="fld fld-full" id="set-comps-wrap" style="display:${it?.is_set?'flex':'none'};flex-direction:column;gap:6px">
-        <label>SET COMPONENTS (select items included in this set)</label>
-        <div class="set-comps-list">
-          ${compOptions.map(ci=>`
-            <div class="set-comp-item">
-              <input type="checkbox" id="sc-${ci.id}" value="${ci.id}" ${existingComps.includes(ci.id)?'checked':''}/>
-              <label for="sc-${ci.id}">
-                ${esc(ci.emoji||'🍽')} ${esc(ci.name)}
-                ${ci.name_jp?`<span class="sc-jp">(${esc(ci.name_jp)})</span>`:''}
-              </label>
-            </div>
-          `).join('')}
-        </div>
+        <label>SET COMPONENTS</label>
+        <p style="font-size:.75rem;color:var(--text3);margin-top:-2px">Check items to include. Set a <b>Group name</b> (e.g. "Salad", "Soup") so customers choose ONE from that group. Leave group blank for items always included.</p>
+        <div class="set-comps-list" style="max-height:220px">${compRows}</div>
       </div>
     </div>
   `;
@@ -723,6 +733,12 @@ window.openItemModal = async function(id) {
   document.getElementById('_modal_title').textContent=it?'Edit Item':'Add Item';
   document.getElementById('_modal_body').innerHTML=bodyHTML;
   modal.style.display='flex';
+
+  // Show group rows for pre-checked components
+  document.querySelectorAll('.sc-check:checked').forEach(cb=>{
+    const row=document.getElementById('sc-group-row-'+cb.value);
+    if(row) row.style.display='flex';
+  });
 
   // Image upload preview
   document.getElementById('img-file').addEventListener('change', async e=>{
@@ -751,7 +767,17 @@ window.openItemModal = async function(id) {
   foot.appendChild(cancelBtn); foot.appendChild(saveBtn);
 }
 
-window.toggleSetComps=function(show){ document.getElementById('set-comps-wrap').style.display=show?'flex':'none'; }
+window.toggleSetComps=function(show){
+  document.getElementById('set-comps-wrap').style.display=show?'flex':'none';
+}
+
+// Show/hide group input when a set component checkbox is toggled
+document.addEventListener('change', function(e){
+  if (!e.target.classList.contains('sc-check')) return;
+  const cid = e.target.value;
+  const row = document.getElementById('sc-group-row-'+cid);
+  if (row) row.style.display = e.target.checked ? 'flex' : 'none';
+});
 
 async function saveItem(it) {
   const name=document.getElementById('mi-name').value.trim();
@@ -778,12 +804,18 @@ async function saveItem(it) {
 
   if (error) { toast('Error: '+error.message,'error'); return false; }
 
-  // Save set components
+  // Save set components with component_group
   if (isSet && data) {
     await sb.from('set_components').delete().eq('set_id',data.id);
-    const checked=[...document.querySelectorAll('[id^="sc-"]:checked')].map(c=>c.value);
+    const checked=[...document.querySelectorAll('.sc-check:checked')];
     if (checked.length) {
-      await sb.from('set_components').insert(checked.map((cid,i)=>({set_id:data.id,component_id:cid,sort_order:i})));
+      const rows=checked.map((cb,i)=>{
+        const cid=cb.value;
+        const groupInput=document.getElementById('sc-group-'+cid);
+        const group=groupInput?groupInput.value.trim()||null:null;
+        return {set_id:data.id,component_id:cid,component_group:group,sort_order:i};
+      });
+      await sb.from('set_components').insert(rows);
     }
   }
 
