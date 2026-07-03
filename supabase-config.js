@@ -1,19 +1,15 @@
-// ============================================================
-// supabase-config.js
-// ⚠️  Edit ONLY the two lines marked below
-// Supabase Dashboard → Settings → API
-// ============================================================
-
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-// ▼▼ Edit these two lines ▼▼
+// ============================================================
+// Edit ONLY these two lines:
+// Supabase Dashboard -> Settings -> API
+// ============================================================
 const SUPABASE_URL = 'https://xtcjbajcbcanuvcnkswz.supabase.co'; 
 const SUPABASE_ANON_KEY = 'sb_publishable_k09ru9G1GsnXLHz5t4I6VQ_X0jbfPKK';
-// ▲▲ Edit these two lines ▲▲
+// ============================================================
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* ── Settings ─────────────────────────────────────────────── */
 export async function getSettings() {
   const { data } = await sb.from('settings').select('key,value');
   const map = {};
@@ -25,20 +21,20 @@ export async function saveSetting(key, value) {
   await sb.from('settings').upsert({ key, value }, { onConflict: 'key' });
 }
 
-/* ── Formatting ───────────────────────────────────────────── */
-export function fmt(price, currency = '¥') {
+export function fmt(price, currency) {
+  currency = currency || 'Y';
   return currency + Number(price).toLocaleString();
 }
 
 export function timeAgo(iso) {
-  const s = Math.floor((Date.now() - new Date(iso)) / 1000);
-  if (s < 60)   return s + 's ago';
+  var s = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (s < 60) return s + 's ago';
   if (s < 3600) return Math.floor(s / 60) + 'm ago';
   return Math.floor(s / 3600) + 'h ago';
 }
 
 export function esc(str) {
-  return String(str ?? '')
+  return String(str == null ? '' : str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -49,193 +45,141 @@ export function padNum(n) {
   return String(n).padStart(4, '0');
 }
 
-/* ── Toast ────────────────────────────────────────────────── */
-export function toast(msg, type = 'info', ms = 3500) {
-  let area = document.getElementById('toast-area');
+export function toast(msg, type, ms) {
+  type = type || 'info';
+  ms   = ms   || 3500;
+  var area = document.getElementById('toast-area');
   if (!area) {
     area = document.createElement('div');
     area.id = 'toast-area';
-    area.style.cssText = [
-      'position:fixed', 'bottom:20px', 'left:50%', 'transform:translateX(-50%)',
-      'z-index:9999', 'display:flex', 'flex-direction:column',
-      'align-items:center', 'gap:8px', 'pointer-events:none',
-      'width:max-content', 'max-width:90vw',
-    ].join(';');
+    area.style.position  = 'fixed';
+    area.style.bottom    = '20px';
+    area.style.left      = '50%';
+    area.style.transform = 'translateX(-50%)';
+    area.style.zIndex    = '9999';
+    area.style.display        = 'flex';
+    area.style.flexDirection  = 'column';
+    area.style.alignItems     = 'center';
+    area.style.gap            = '8px';
+    area.style.pointerEvents  = 'none';
+    area.style.maxWidth       = '90vw';
     document.body.appendChild(area);
   }
-  const colors = { success: '#22c55e', error: '#ef4444', info: '#f5c842', warning: '#f97316' };
-  const el = document.createElement('div');
-  el.style.cssText = [
-    'background:#1b2340', 'color:#fff',
-    'border:1px solid rgba(255,255,255,.1)',
-    `border-left:4px solid ${colors[type] || colors.info}`,
-    'border-radius:12px', 'padding:12px 20px',
-    'font-size:14px', 'font-weight:700',
-    'box-shadow:0 8px 32px rgba(0,0,0,.4)',
-    'pointer-events:all',
-    "font-family:'Nunito',sans-serif",
-    'white-space:nowrap',
-  ].join(';');
+  var colors = { success: '#22c55e', error: '#ef4444', info: '#f5c842', warning: '#f97316' };
+  var el = document.createElement('div');
+  el.style.background    = '#1b2340';
+  el.style.color         = '#fff';
+  el.style.border        = '1px solid rgba(255,255,255,.1)';
+  el.style.borderLeft    = '4px solid ' + (colors[type] || colors.info);
+  el.style.borderRadius  = '12px';
+  el.style.padding       = '12px 20px';
+  el.style.fontSize      = '14px';
+  el.style.fontWeight    = '700';
+  el.style.boxShadow     = '0 8px 32px rgba(0,0,0,.4)';
+  el.style.pointerEvents = 'all';
+  el.style.fontFamily    = 'Nunito, sans-serif';
+  el.style.whiteSpace    = 'nowrap';
   el.textContent = msg;
   area.appendChild(el);
   el.animate(
-    [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'translateY(0)' }],
+    [{ opacity: '0', transform: 'translateY(8px)' }, { opacity: '1', transform: 'translateY(0)' }],
     { duration: 220, fill: 'forwards' }
   );
-  setTimeout(() => {
-    el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' })
-      .onfinish = () => el.remove();
+  setTimeout(function() {
+    el.animate([{ opacity: '1' }, { opacity: '0' }], { duration: 220, fill: 'forwards' })
+      .onfinish = function() { el.remove(); };
   }, ms);
 }
 
-/* ── Image upload to Supabase Storage ────────────────────── */
 export async function uploadFoodImage(file) {
-  const ext  = file.name.split('.').pop();
-  const path = `food/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const { error } = await sb.storage
-    .from('food-images')
-    .upload(path, file, { upsert: false });
-  if (error) return { url: null, error: error.message };
-  const { data } = sb.storage.from('food-images').getPublicUrl(path);
-  return { url: data.publicUrl, error: null };
+  var ext  = file.name.split('.').pop();
+  var path = 'food/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+  var up   = await sb.storage.from('food-images').upload(path, file, { upsert: false });
+  if (up.error) return { url: null, error: up.error.message };
+  var pub = sb.storage.from('food-images').getPublicUrl(path);
+  return { url: pub.data.publicUrl, error: null };
 }
 
-/* ── Confirm dialog ───────────────────────────────────────── */
-// Self-contained — uses its own overlay ID, never conflicts with
-// the admin page's modal system.
 export function confirmDialog(msg) {
-  return new Promise(resolve => {
-    document.getElementById('_cfg_confirm')?.remove();
+  return new Promise(function(resolve) {
+    var old = document.getElementById('_cfg_confirm');
+    if (old) old.remove();
 
-    const overlay = document.createElement('div');
+    var overlay = document.createElement('div');
     overlay.id = '_cfg_confirm';
-    overlay.style.cssText = [
-      'position:fixed', 'inset:0',
-      'background:rgba(0,0,0,.65)', 'z-index:9000',
-      'display:flex', 'align-items:center',
-      'justify-content:center', 'padding:16px',
-    ].join(';');
+    overlay.style.position       = 'fixed';
+    overlay.style.inset          = '0';
+    overlay.style.background     = 'rgba(0,0,0,.65)';
+    overlay.style.zIndex         = '9000';
+    overlay.style.display        = 'flex';
+    overlay.style.alignItems     = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.padding        = '16px';
 
-    overlay.innerHTML = `
-      <div style="background:#242E50;border:1px solid rgba(255,255,255,.12);
-                  border-radius:20px;padding:28px;width:100%;max-width:380px;
-                  box-shadow:0 16px 48px rgba(0,0,0,.55);font-family:'Nunito',sans-serif">
-        <p style="color:#9AA0C0;font-size:.9rem;line-height:1.65;margin-bottom:22px">
-          ${esc(msg)}
-        </p>
-        <div style="display:flex;gap:10px;justify-content:flex-end">
-          <button id="_cfg_cancel"
-            style="padding:9px 20px;border-radius:8px;font-size:.85rem;font-weight:800;
-                   cursor:pointer;border:none;background:rgba(255,255,255,.07);
-                   color:#9AA0C0;font-family:'Nunito',sans-serif">
-            Cancel
-          </button>
-          <button id="_cfg_ok"
-            style="padding:9px 20px;border-radius:8px;font-size:.85rem;font-weight:800;
-                   cursor:pointer;border:none;background:rgba(255,107,91,.2);
-                   color:#FF6B5B;font-family:'Nunito',sans-serif">
-            Confirm
-          </button>
-        </div>
-      </div>`;
+    var box = document.createElement('div');
+    box.style.background   = '#242E50';
+    box.style.border       = '1px solid rgba(255,255,255,.12)';
+    box.style.borderRadius = '20px';
+    box.style.padding      = '28px';
+    box.style.width        = '100%';
+    box.style.maxWidth     = '380px';
+    box.style.boxShadow    = '0 16px 48px rgba(0,0,0,.55)';
+    box.style.fontFamily   = 'Nunito, sans-serif';
 
+    var p = document.createElement('p');
+    p.style.color        = '#9AA0C0';
+    p.style.fontSize     = '.9rem';
+    p.style.lineHeight   = '1.65';
+    p.style.marginBottom = '22px';
+    p.textContent = msg;
+
+    var row = document.createElement('div');
+    row.style.display        = 'flex';
+    row.style.gap            = '10px';
+    row.style.justifyContent = 'flex-end';
+
+    var cancelBtn = document.createElement('button');
+    cancelBtn.textContent      = 'Cancel';
+    cancelBtn.style.padding    = '9px 20px';
+    cancelBtn.style.borderRadius = '8px';
+    cancelBtn.style.fontSize   = '.85rem';
+    cancelBtn.style.fontWeight = '800';
+    cancelBtn.style.cursor     = 'pointer';
+    cancelBtn.style.border     = 'none';
+    cancelBtn.style.background = 'rgba(255,255,255,.07)';
+    cancelBtn.style.color      = '#9AA0C0';
+    cancelBtn.style.fontFamily = 'Nunito, sans-serif';
+
+    var okBtn = document.createElement('button');
+    okBtn.textContent      = 'Confirm';
+    okBtn.style.padding    = '9px 20px';
+    okBtn.style.borderRadius = '8px';
+    okBtn.style.fontSize   = '.85rem';
+    okBtn.style.fontWeight = '800';
+    okBtn.style.cursor     = 'pointer';
+    okBtn.style.border     = 'none';
+    okBtn.style.background = 'rgba(255,107,91,.2)';
+    okBtn.style.color      = '#FF6B5B';
+    okBtn.style.fontFamily = 'Nunito, sans-serif';
+
+    row.appendChild(cancelBtn);
+    row.appendChild(okBtn);
+    box.appendChild(p);
+    box.appendChild(row);
+    overlay.appendChild(box);
     document.body.appendChild(overlay);
 
-    const close = val => { overlay.remove(); resolve(val); };
+    function close(val) { overlay.remove(); resolve(val); }
 
-    overlay.querySelector('#_cfg_cancel').onclick = () => close(false);
-    overlay.querySelector('#_cfg_ok').onclick     = () => close(true);
-    overlay.addEventListener('click', e => { if (e.target === overlay) close(false); });
-
-    const handler = e => {
+    cancelBtn.onclick = function() { close(false); };
+    okBtn.onclick     = function() { close(true); };
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) close(false);
+    });
+    function handler(e) {
       if (e.key === 'Escape') { close(false); document.removeEventListener('keydown', handler); }
       if (e.key === 'Enter')  { close(true);  document.removeEventListener('keydown', handler); }
-    };
+    }
     document.addEventListener('keydown', handler);
   });
-}
-
-/* ── openModal (used by index.html, NOT admin.html) ─────── */
-let _modalResolve = null;
-
-export function openModal(title, bodyHTML, buttons = []) {
-  return new Promise(resolve => {
-    _modalResolve = resolve;
-
-    let bg = document.getElementById('_sb_modal_bg');
-    if (!bg) {
-      bg = document.createElement('div');
-      bg.id = '_sb_modal_bg';
-      bg.style.cssText = [
-        'position:fixed', 'inset:0',
-        'background:rgba(0,0,0,.65)', 'z-index:800',
-        'display:flex', 'align-items:center',
-        'justify-content:center', 'padding:16px',
-      ].join(';');
-      document.body.appendChild(bg);
-      bg.addEventListener('click', e => { if (e.target === bg) closeModal(null); });
-    }
-
-    bg.innerHTML = `
-      <div style="background:#242E50;border:1px solid rgba(255,255,255,.1);
-                  border-radius:24px;padding:28px;width:100%;max-width:520px;
-                  max-height:90dvh;overflow-y:auto;
-                  box-shadow:0 16px 48px rgba(0,0,0,.5);
-                  font-family:'Nunito',sans-serif">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-          <span id="_sb_modal_title"
-            style="font-family:'Fredoka',sans-serif;font-size:1.2rem;
-                   font-weight:700;color:#F5C842">
-            ${esc(title)}
-          </span>
-          <button id="_sb_modal_x"
-            style="background:rgba(255,255,255,.08);color:#9AA0C0;border-radius:8px;
-                   width:30px;height:30px;display:flex;align-items:center;
-                   justify-content:center;font-size:.9rem;cursor:pointer;border:none">
-            ✕
-          </button>
-        </div>
-        <div id="_sb_modal_body">${bodyHTML}</div>
-        <div id="_sb_modal_foot"
-          style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">
-        </div>
-      </div>`;
-
-    bg.querySelector('#_sb_modal_x').onclick = () => closeModal(null);
-
-    const foot = bg.querySelector('#_sb_modal_foot');
-    buttons.forEach(b => {
-      const btn = document.createElement('button');
-      btn.textContent = b.label;
-      btn.style.cssText = [
-        'padding:9px 20px', 'border-radius:8px', 'font-size:.85rem',
-        'font-weight:800', 'cursor:pointer', 'border:none',
-        "font-family:'Nunito',sans-serif", 'transition:all .15s',
-        b.style || 'background:#2E3C64;color:#9AA0C0',
-      ].join(';');
-      btn.onclick = async () => {
-        const result = await b.action?.();
-        if (result !== false) closeModal(0);
-      };
-      foot.appendChild(btn);
-    });
-
-    bg.style.display = 'flex';
-    setTimeout(() => bg.querySelector('input,textarea')?.focus(), 80);
-
-    const escHandler = e => {
-      if (e.key === 'Escape') {
-        closeModal(null);
-        document.removeEventListener('keydown', escHandler);
-      }
-    };
-    document.addEventListener('keydown', escHandler);
-  });
-}
-
-export function closeModal(result) {
-  const bg = document.getElementById('_sb_modal_bg');
-  if (bg) bg.style.display = 'none';
-  _modalResolve?.(result);
-  _modalResolve = null;
 }
