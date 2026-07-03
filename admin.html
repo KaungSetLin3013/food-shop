@@ -276,15 +276,27 @@ input,select,textarea{font-family:inherit}
 
     <!-- MENU -->
     <div class="panel" id="p-menu">
+      <!-- Regular menu items -->
       <div class="acard">
         <div class="acard-hd">
           <div class="acard-title">Menu Items</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div class="search-wrap"><span class="search-icon">🔍</span><input id="menu-search" placeholder="Search…" oninput="renderMenu()"/></div>
-            <button class="btn btn-primary" onclick="openItemModal(null)">+ Add Item</button>
+            <button class="btn btn-primary" onclick="openRegularItemModal(null)">+ Add Item</button>
           </div>
         </div>
         <div class="item-list" id="menu-list"></div>
+      </div>
+      <!-- Set menus -->
+      <div class="acard" style="margin-top:18px">
+        <div class="acard-hd">
+          <div>
+            <div class="acard-title">Set Menus</div>
+            <p style="font-size:.78rem;color:var(--text3);margin-top:2px">Offered to customers as an upgrade after choosing a main dish</p>
+          </div>
+          <button class="btn btn-primary" onclick="openItemModal(null)">+ Add Set Menu</button>
+        </div>
+        <div class="item-list" id="sets-list"></div>
       </div>
     </div>
 
@@ -642,75 +654,61 @@ window.completeCheckout = async function(tableNum, total, btn) {
 
 // ── MENU ───────────────────────────────────────────────────
 window.renderMenu = function() {
-  const search = document.getElementById('menu-search')?.value?.toLowerCase()||'';
-  const sym = settings.currency||'¥';
-  const list = document.getElementById('menu-list');
-  let filtered = menuItems;
-  if (search) filtered=filtered.filter(i=>i.name.toLowerCase().includes(search)||(i.name_jp||'').includes(search));
+  const search = document.getElementById('menu-search')?.value?.toLowerCase() || '';
+  const sym    = settings.currency || '¥';
 
-  if (!filtered.length) { list.innerHTML='<div class="empty-s"><div class="big">🍽</div><p>No items</p></div>'; return; }
-  list.innerHTML=filtered.map(it=>{
-    const cat=categories.find(c=>c.id===it.category_id);
-    const img=it.image_url?`<img src="${esc(it.image_url)}" loading="lazy"/>`:(it.emoji||'🍽');
-    return `
-      <div class="irow">
-        <div class="irow-img">${img}</div>
-        <div class="irow-info">
-          <div class="irow-name">${esc(it.name)} ${it.is_set?'<span style="background:rgba(245,200,66,.15);color:var(--mustard);font-size:.65rem;padding:2px 6px;border-radius:99px;margin-left:4px">SET</span>':''}</div>
-          ${it.name_jp?`<div class="irow-jp">${esc(it.name_jp)}</div>`:''}
-          <div class="irow-meta">${cat?esc(cat.name):'—'} · ${it.available?'✅ Available':'🚫 Hidden'}</div>
-        </div>
-        <div class="irow-price">${fmt(it.price,sym)}</div>
-        <div class="irow-actions">
-          <button class="btn btn-mint btn-sm" onclick="toggleAvail('${it.id}',${it.available})">${it.available?'Disable':'Enable'}</button>
-          <button class="btn btn-edit btn-sm" onclick="openItemModal('${it.id}')">Edit</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteItem('${it.id}')">Delete</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+  const regular = menuItems.filter(i => !i.is_set);
+  const sets    = menuItems.filter(i =>  i.is_set);
+  const filteredRegular = search ? regular.filter(i => i.name.toLowerCase().includes(search)||(i.name_jp||'').includes(search)) : regular;
+  const filteredSets    = search ? sets.filter(i => i.name.toLowerCase().includes(search)||(i.name_jp||'').includes(search)) : sets;
+
+  const list = document.getElementById('menu-list');
+  list.innerHTML = filteredRegular.length
+    ? filteredRegular.map(it => buildItemRow(it, sym, false)).join('')
+    : '<div class="empty-s" style="padding:24px"><div class="big" style="font-size:2rem">🍽</div><p>No items found</p></div>';
+
+  const setsList = document.getElementById('sets-list');
+  if (setsList) {
+    setsList.innerHTML = filteredSets.length
+      ? filteredSets.map(it => buildItemRow(it, sym, true)).join('')
+      : '<div class="empty-s" style="padding:24px"><div class="big" style="font-size:2rem">🍱</div><p>No set menus yet — click Add Set Menu above</p></div>';
+  }
 }
 
-window.openItemModal = async function(id) {
-  const it=id?menuItems.find(x=>x.id===id):null;
+function buildItemRow(it, sym, isSet) {
+  const cat   = categories.find(c => c.id === it.category_id);
+  const img   = it.image_url ? `<img src="${esc(it.image_url)}" loading="lazy"/>` : (it.emoji || (isSet ? '🍱' : '🍽'));
+  const editFn = isSet ? `openItemModal('${it.id}')` : `openRegularItemModal('${it.id}')`;
+  return `
+    <div class="irow">
+      <div class="irow-img">${img}</div>
+      <div class="irow-info">
+        <div class="irow-name">${esc(it.name)}</div>
+        ${it.name_jp ? `<div class="irow-jp">${esc(it.name_jp)}</div>` : ''}
+        <div class="irow-meta">${cat ? esc(cat.name) : '—'} · ${it.available ? '✅ Available' : '🚫 Hidden'}</div>
+      </div>
+      <div class="irow-price">${isSet ? '+' : ''}${fmt(it.price, sym)}</div>
+      <div class="irow-actions">
+        <button class="btn btn-mint btn-sm" onclick="toggleAvail('${it.id}',${it.available})">${it.available ? 'Disable' : 'Enable'}</button>
+        <button class="btn btn-edit btn-sm" onclick="${editFn}">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('${it.id}')">Delete</button>
+      </div>
+    </div>`;
+}
 
-  // Get set component options (non-set items)
-  const compOptions=menuItems.filter(x=>!x.is_set);
+// Regular (non-set) item modal
+window.openRegularItemModal = async function(id) {
+  const it = id ? menuItems.find(x => x.id === id) : null;
+  const catOpts = categories.map(c =>
+    `<option value="${c.id}" ${it?.category_id === c.id ? 'selected' : ''}>${esc(c.name)}</option>`
+  ).join('');
 
-  // Get existing set components (with group) if editing
-  let existingComps=[];   // [{component_id, component_group}]
-  if (id && it?.is_set) {
-    const {data}=await sb.from('set_components').select('component_id,component_group,sort_order').eq('set_id',id).order('sort_order');
-    existingComps=data||[];
-  }
-
-  const catOpts=categories.map(c=>`<option value="${c.id}" ${it?.category_id===c.id?'selected':''}>${esc(c.name)}</option>`).join('');
-
-  // Build set-component rows with group input
-  const compRows=compOptions.map(ci=>{
-    const ex=existingComps.find(e=>e.component_id===ci.id);
-    return `
-      <div class="set-comp-item" style="flex-direction:column;align-items:flex-start;gap:5px;padding:8px 10px">
-        <label class="af-check" style="margin:0">
-          <input type="checkbox" class="sc-check" id="sc-${ci.id}" value="${ci.id}" ${ex?'checked':''}/>
-          <span>${esc(ci.emoji||'🍽')} ${esc(ci.name_jp||ci.name)}</span>
-        </label>
-        <div style="display:flex;align-items:center;gap:6px;margin-left:22px" id="sc-group-row-${ci.id}" style="display:${ex?'flex':'none'}">
-          <span style="font-size:.7rem;color:var(--text3);font-weight:700">Group:</span>
-          <input id="sc-group-${ci.id}" type="text"
-            value="${esc(ex?.component_group||'')}"
-            placeholder="e.g. Salad, Soup (blank = always included)"
-            style="flex:1;padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:var(--navy);color:#fff;font-size:.78rem;font-family:'Nunito',sans-serif"/>
-        </div>
-      </div>`;
-  }).join('');
-
-  const bodyHTML=`
+  const bodyHTML = `
     <div class="fgrid">
-      <div class="fld img-upload ${it?.image_url?'has-img':''}" id="upload-area" onclick="document.getElementById('img-file').click()">
-        ${it?.image_url?`<img src="${esc(it.image_url)}" id="img-preview"/>`:'<div class="img-upload-icon">🖼</div><span>Click to upload image</span>'}
+      <div class="fld img-upload ${it?.image_url ? 'has-img' : ''}" id="upload-area" onclick="document.getElementById('img-file').click()">
+        ${it?.image_url ? `<img src="${esc(it.image_url)}"/>` : '<div class="img-upload-icon">🖼</div><span>Click to upload image</span>'}
         <input type="file" id="img-file" accept="image/*" style="display:none"/>
-        <input type="hidden" id="img-url" value="${esc(it?.image_url||'')}"/>
+        <input type="hidden" id="img-url" value="${esc(it?.image_url || '')}"/>
       </div>
       <div class="fld"><label>Name (EN) *</label><input id="mi-name" value="${esc(it?.name||'')}" placeholder="Ramen Bowl" maxlength="60"/></div>
       <div class="fld"><label>Japanese Name</label><input id="mi-jp" value="${esc(it?.name_jp||'')}" placeholder="ラーメン" maxlength="60"/></div>
@@ -719,110 +717,269 @@ window.openItemModal = async function(id) {
       <div class="fld fld-full"><label>Description</label><textarea id="mi-desc" placeholder="Short description…" maxlength="180">${esc(it?.description||'')}</textarea></div>
       <div class="fld"><label>Price *</label><input id="mi-price" type="number" value="${it?.price||''}" min="0" step="1"/></div>
       <div class="chk-label"><input type="checkbox" id="mi-avail" ${!it||it.available?'checked':''}/> Available for ordering</div>
-      <div class="chk-label"><input type="checkbox" id="mi-set" ${it?.is_set?'checked':''} onchange="toggleSetComps(this.checked)"/> This is a SET menu</div>
-      <div class="fld fld-full" id="set-comps-wrap" style="display:${it?.is_set?'flex':'none'};flex-direction:column;gap:6px">
-        <label>SET COMPONENTS</label>
-        <p style="font-size:.75rem;color:var(--text3);margin-top:-2px">Check items to include. Set a <b>Group name</b> (e.g. "Salad", "Soup") so customers choose ONE from that group. Leave group blank for items always included.</p>
-        <div class="set-comps-list" style="max-height:220px">${compRows}</div>
+    </div>`;
+
+  const modal = document.getElementById('_modal_bg') || createModalEl();
+  document.getElementById('_modal_title').textContent = it ? 'Edit Item' : 'Add Item';
+  document.getElementById('_modal_body').innerHTML = bodyHTML;
+  modal.style.display = 'flex';
+
+  document.getElementById('img-file').addEventListener('change', async e => {
+    const file = e.target.files[0]; if (!file) return;
+    const area = document.getElementById('upload-area');
+    area.innerHTML = '<div class="img-uploading">⏳ Uploading…</div>';
+    const { url, error } = await (await import('./supabase-config.js')).uploadFoodImage(file);
+    if (error) { toast('Upload failed: '+error,'error'); area.innerHTML='<div class="img-upload-icon">🖼</div><span>Click to upload</span>'; return; }
+    document.getElementById('img-url').value = url;
+    area.classList.add('has-img');
+    area.innerHTML = `<img src="${esc(url)}" style="width:100%;height:160px;object-fit:cover;border-radius:calc(var(--r) - 2px)"/><input type="hidden" id="img-url" value="${esc(url)}"/>`;
+    toast('Image uploaded!','success');
+  });
+
+  const foot = document.getElementById('_modal_foot');
+  foot.innerHTML = '';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.style.cssText = 'padding:9px 20px;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer;border:none;font-family:Nunito,sans-serif;background:rgba(255,255,255,.07);color:#9AA0C0';
+  cancelBtn.onclick = () => { modal.style.display = 'none'; };
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = it ? 'Save Changes' : 'Add Item';
+  saveBtn.style.cssText = 'padding:9px 20px;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer;border:none;font-family:Nunito,sans-serif;background:#F5C842;color:#1B2340';
+  saveBtn.onclick = async () => {
+    const name  = document.getElementById('mi-name').value.trim();
+    const price = parseFloat(document.getElementById('mi-price').value);
+    if (!name)        { toast('Name is required','error'); return; }
+    if (isNaN(price)) { toast('Price is required','error'); return; }
+    const payload = {
+      name, name_jp: document.getElementById('mi-jp').value.trim()||null,
+      emoji: document.getElementById('mi-emoji').value.trim()||'🍽',
+      description: document.getElementById('mi-desc').value.trim()||null,
+      price, image_url: document.getElementById('img-url')?.value||it?.image_url||null,
+      category_id: document.getElementById('mi-cat').value||null,
+      available: document.getElementById('mi-avail').checked,
+      is_set: false,
+    };
+    const {data,error} = it
+      ? await sb.from('menu_items').update(payload).eq('id',it.id).select().single()
+      : await sb.from('menu_items').insert(payload).select().single();
+    if (error) { toast('Error: '+error.message,'error'); return; }
+    if (it) menuItems = menuItems.map(x => x.id===it.id ? data : x);
+    else    menuItems.unshift(data);
+    renderMenu();
+    modal.style.display = 'none';
+    toast(it ? 'Item updated!' : 'Item added!','success');
+  };
+  foot.appendChild(cancelBtn);
+  foot.appendChild(saveBtn);
+}
+
+window.openItemModal = async function(id) {
+  const it = id ? menuItems.find(x => x.id === id) : null;
+
+  // Load existing set groups (category-based) if editing a set
+  let existingGroups = []; // [{group_name, category_id, sort_order}]
+  if (id && it?.is_set) {
+    const { data } = await sb.from('set_components')
+      .select('component_group, component_category_id, sort_order')
+      .eq('set_id', id)
+      .not('component_group', 'is', null)
+      .order('sort_order');
+    existingGroups = data || [];
+  }
+
+  const catOpts = categories.map(c =>
+    `<option value="${c.id}" ${it?.category_id === c.id ? 'selected' : ''}>${esc(c.name)}</option>`
+  ).join('');
+
+  // Build existing group rows HTML
+  const existingGroupRows = existingGroups.map((g, i) => buildGroupRow(i, g.group_name, g.category_id)).join('');
+
+  const bodyHTML = `
+    <div class="fgrid">
+      <div class="fld img-upload ${it?.image_url ? 'has-img' : ''}" id="upload-area" onclick="document.getElementById('img-file').click()">
+        ${it?.image_url
+          ? `<img src="${esc(it.image_url)}" id="img-preview"/>`
+          : '<div class="img-upload-icon">🖼</div><span>Click to upload image</span>'}
+        <input type="file" id="img-file" accept="image/*" style="display:none"/>
+        <input type="hidden" id="img-url" value="${esc(it?.image_url || '')}"/>
+      </div>
+      <div class="fld"><label>Name (EN) *</label><input id="mi-name" value="${esc(it?.name || '')}" placeholder="Ramen Bowl" maxlength="60"/></div>
+      <div class="fld"><label>Japanese Name</label><input id="mi-jp" value="${esc(it?.name_jp || '')}" placeholder="ラーメン" maxlength="60"/></div>
+      <div class="fld"><label>Emoji</label><input id="mi-emoji" value="${esc(it?.emoji || '')}" placeholder="🍱" maxlength="4"/></div>
+      <div class="fld"><label>Category</label><select id="mi-cat"><option value="">— none —</option>${catOpts}</select></div>
+      <div class="fld fld-full"><label>Description</label>
+        <textarea id="mi-desc" placeholder="e.g. Choose one salad + one soup" maxlength="180">${esc(it?.description || '')}</textarea>
+      </div>
+      <div class="fld"><label>Set Upgrade Price *</label>
+        <input id="mi-price" type="number" value="${it?.price || ''}" min="0" step="1"
+          style="border-color:rgba(245,200,66,.4)"
+          placeholder="Extra charge for the set (e.g. 150)"/>
+        <span style="font-size:.72rem;color:var(--text3);margin-top:3px">This is added on top of the main item's price</span>
+      </div>
+      <div class="chk-label">
+        <input type="checkbox" id="mi-avail" ${!it || it.available ? 'checked' : ''}/>
+        Available (offer this set to customers)
+      </div>
+      <div class="fld fld-full" id="set-comps-wrap">
+        <label style="margin-bottom:4px">CHOICE GROUPS</label>
+        <p style="font-size:.75rem;color:var(--text3);margin-bottom:10px;line-height:1.5">
+          Each group = one choice the customer must make.<br>
+          <b>Group Name</b>: shown to customer (e.g. "Salad", "Soup")<br>
+          <b>Category</b>: all available items from that category will be shown as options.
+        </p>
+        <div id="group-rows" style="display:flex;flex-direction:column;gap:10px">
+          ${existingGroupRows}
+        </div>
+        <button type="button" onclick="addGroupRow()"
+          style="margin-top:10px;padding:8px 14px;border-radius:8px;border:1.5px dashed rgba(245,200,66,.4);background:rgba(245,200,66,.06);color:var(--mustard);font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s;width:100%">
+          + Add Choice Group
+        </button>
       </div>
     </div>
   `;
 
-  // Monkey-patch openModal from config for this page
-  const modal=document.getElementById('_modal_bg')||createModalEl();
-  document.getElementById('_modal_title').textContent=it?'Edit Item':'Add Item';
-  document.getElementById('_modal_body').innerHTML=bodyHTML;
-  modal.style.display='flex';
+  const modal = document.getElementById('_modal_bg') || createModalEl();
+  document.getElementById('_modal_title').textContent = it ? 'Edit Set Menu' : 'Add Set Menu';
+  document.getElementById('_modal_body').innerHTML = bodyHTML;
+  modal.style.display = 'flex';
 
-  // Show group rows for pre-checked components
-  document.querySelectorAll('.sc-check:checked').forEach(cb=>{
-    const row=document.getElementById('sc-group-row-'+cb.value);
-    if(row) row.style.display='flex';
-  });
-
-  // Image upload preview
-  document.getElementById('img-file').addEventListener('change', async e=>{
-    const file=e.target.files[0]; if(!file) return;
-    const area=document.getElementById('upload-area');
-    area.innerHTML='<div class="img-uploading">⏳ Uploading…</div>';
-    const {url,error}=await (await import('./supabase-config.js')).uploadFoodImage(file);
-    if (error) { toast('Upload failed: '+error,'error'); area.innerHTML='<div class="img-upload-icon">🖼</div><span>Click to upload</span>'; return; }
-    document.getElementById('img-url').value=url;
+  // Image upload
+  document.getElementById('img-file').addEventListener('change', async e => {
+    const file = e.target.files[0]; if (!file) return;
+    const area = document.getElementById('upload-area');
+    area.innerHTML = '<div class="img-uploading">⏳ Uploading…</div>';
+    const { url, error } = await (await import('./supabase-config.js')).uploadFoodImage(file);
+    if (error) { toast('Upload failed: ' + error, 'error'); area.innerHTML = '<div class="img-upload-icon">🖼</div><span>Click to upload</span>'; return; }
+    document.getElementById('img-url').value = url;
     area.classList.add('has-img');
-    area.innerHTML=`<img src="${esc(url)}" id="img-preview" style="width:100%;height:160px;object-fit:cover;border-radius:calc(var(--r) - 2px)"/><input type="hidden" id="img-url" value="${esc(url)}"/>`;
-    toast('Image uploaded!','success');
+    area.innerHTML = `<img src="${esc(url)}" style="width:100%;height:160px;object-fit:cover;border-radius:calc(var(--r) - 2px)"/><input type="hidden" id="img-url" value="${esc(url)}"/>`;
+    toast('Image uploaded!', 'success');
   });
 
   // Footer buttons
-  const foot=document.getElementById('_modal_foot');
-  foot.innerHTML='';
-  const saveBtn=document.createElement('button');
-  saveBtn.textContent=it?'Save Changes':'Add Item';
-  saveBtn.style.cssText='padding:9px 20px;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer;border:none;font-family:Nunito,sans-serif;background:#F5C842;color:#1B2340';
-  saveBtn.onclick=async()=>{ if(await saveItem(it)) { document.getElementById('_modal_bg').style.display='none'; } };
-  const cancelBtn=document.createElement('button');
-  cancelBtn.textContent='Cancel';
-  cancelBtn.style.cssText='padding:9px 20px;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer;border:none;font-family:Nunito,sans-serif;background:rgba(255,255,255,.07);color:#9AA0C0';
-  cancelBtn.onclick=()=>{ document.getElementById('_modal_bg').style.display='none'; };
-  foot.appendChild(cancelBtn); foot.appendChild(saveBtn);
+  const foot = document.getElementById('_modal_foot');
+  foot.innerHTML = '';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.style.cssText = 'padding:9px 20px;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer;border:none;font-family:Nunito,sans-serif;background:rgba(255,255,255,.07);color:#9AA0C0';
+  cancelBtn.onclick = () => { document.getElementById('_modal_bg').style.display = 'none'; };
+
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = it ? 'Save Changes' : 'Add Set';
+  saveBtn.style.cssText = 'padding:9px 20px;border-radius:8px;font-size:.85rem;font-weight:800;cursor:pointer;border:none;font-family:Nunito,sans-serif;background:#F5C842;color:#1B2340';
+  saveBtn.onclick = async () => { if (await saveItem(it)) document.getElementById('_modal_bg').style.display = 'none'; };
+
+  foot.appendChild(cancelBtn);
+  foot.appendChild(saveBtn);
 }
 
-window.toggleSetComps=function(show){
-  document.getElementById('set-comps-wrap').style.display=show?'flex':'none';
+// Build a single group row (group name + category picker)
+function buildGroupRow(idx, groupName = '', categoryId = '') {
+  const catOpts = categories.map(c =>
+    `<option value="${c.id}" ${c.id === categoryId ? 'selected' : ''}>${esc(c.name)}</option>`
+  ).join('');
+  return `
+    <div class="group-row" data-idx="${idx}" style="background:var(--navy3);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span style="font-size:.72rem;font-weight:800;color:var(--mustard);text-transform:uppercase;letter-spacing:.06em">Choice Group ${idx + 1}</span>
+        <button type="button" onclick="removeGroupRow(this)"
+          style="background:rgba(255,107,91,.15);color:var(--coral);border:none;border-radius:6px;padding:3px 8px;font-size:.75rem;font-weight:700;cursor:pointer">✕ Remove</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="fld">
+          <label>Group Label</label>
+          <input class="gr-name" type="text" value="${esc(groupName)}"
+            placeholder="e.g. Salad, Soup"
+            style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--navy);color:#fff;font-size:.85rem;width:100%;font-family:'Nunito',sans-serif"/>
+        </div>
+        <div class="fld">
+          <label>Category to Choose From</label>
+          <select class="gr-cat" style="padding:8px 10px;border-radius:7px;border:1px solid var(--border);background:var(--navy);color:#fff;font-size:.85rem;width:100%;font-family:'Nunito',sans-serif">
+            <option value="">— pick a category —</option>
+            ${catOpts}
+          </select>
+        </div>
+      </div>
+    </div>`;
 }
 
-// Show/hide group input when a set component checkbox is toggled
-document.addEventListener('change', function(e){
-  if (!e.target.classList.contains('sc-check')) return;
-  const cid = e.target.value;
-  const row = document.getElementById('sc-group-row-'+cid);
-  if (row) row.style.display = e.target.checked ? 'flex' : 'none';
-});
+window.addGroupRow = function() {
+  const container = document.getElementById('group-rows');
+  const idx = container.querySelectorAll('.group-row').length;
+  const div = document.createElement('div');
+  div.innerHTML = buildGroupRow(idx);
+  container.appendChild(div.firstElementChild);
+}
+
+window.removeGroupRow = function(btn) {
+  btn.closest('.group-row').remove();
+  // Re-number labels
+  document.querySelectorAll('.group-row').forEach((row, i) => {
+    const label = row.querySelector('span');
+    if (label) label.textContent = `Choice Group ${i + 1}`;
+    row.dataset.idx = i;
+  });
+}
+
+window.toggleSetComps = function(show) {
+  // kept for backward compat — set-comps-wrap is always shown for sets
+}
 
 async function saveItem(it) {
-  const name=document.getElementById('mi-name').value.trim();
-  const price=parseFloat(document.getElementById('mi-price').value);
-  if (!name) { toast('Name is required','error'); return false; }
-  if (isNaN(price)) { toast('Price is required','error'); return false; }
+  const name  = document.getElementById('mi-name').value.trim();
+  const price = parseFloat(document.getElementById('mi-price').value);
+  if (!name)        { toast('Name is required', 'error');  return false; }
+  if (isNaN(price)) { toast('Price is required', 'error'); return false; }
 
-  const imgUrl=document.getElementById('img-url')?.value||it?.image_url||null;
-  const isSet=document.getElementById('mi-set').checked;
+  const imgUrl = document.getElementById('img-url')?.value || it?.image_url || null;
 
-  const payload={
-    name, name_jp:document.getElementById('mi-jp').value.trim()||null,
-    emoji:document.getElementById('mi-emoji').value.trim()||'🍽',
-    description:document.getElementById('mi-desc').value.trim()||null,
-    price, image_url:imgUrl,
-    category_id:document.getElementById('mi-cat').value||null,
-    available:document.getElementById('mi-avail').checked,
-    is_set:isSet,
+  const payload = {
+    name,
+    name_jp:     document.getElementById('mi-jp').value.trim()    || null,
+    emoji:       document.getElementById('mi-emoji').value.trim() || '🍱',
+    description: document.getElementById('mi-desc').value.trim()  || null,
+    price,
+    image_url:   imgUrl,
+    category_id: document.getElementById('mi-cat').value || null,
+    available:   document.getElementById('mi-avail').checked,
+    is_set:      true,  // items created here are always sets
   };
 
-  const {data,error}=it
-    ?await sb.from('menu_items').update(payload).eq('id',it.id).select().single()
-    :await sb.from('menu_items').insert(payload).select().single();
+  const { data, error } = it
+    ? await sb.from('menu_items').update(payload).eq('id', it.id).select().single()
+    : await sb.from('menu_items').insert(payload).select().single();
 
-  if (error) { toast('Error: '+error.message,'error'); return false; }
+  if (error) { toast('Error: ' + error.message, 'error'); return false; }
 
-  // Save set components with component_group
-  if (isSet && data) {
-    await sb.from('set_components').delete().eq('set_id',data.id);
-    const checked=[...document.querySelectorAll('.sc-check:checked')];
-    if (checked.length) {
-      const rows=checked.map((cb,i)=>{
-        const cid=cb.value;
-        const groupInput=document.getElementById('sc-group-'+cid);
-        const group=groupInput?groupInput.value.trim()||null:null;
-        return {set_id:data.id,component_id:cid,component_group:group,sort_order:i};
-      });
-      await sb.from('set_components').insert(rows);
+  // Save choice groups as set_components rows (category-based)
+  if (data) {
+    await sb.from('set_components').delete().eq('set_id', data.id);
+    const groupRows = document.querySelectorAll('.group-row');
+    const rows = [];
+    groupRows.forEach((row, i) => {
+      const groupName = row.querySelector('.gr-name')?.value.trim();
+      const catId     = row.querySelector('.gr-cat')?.value;
+      if (groupName && catId) {
+        rows.push({
+          set_id:               data.id,
+          component_id:         null,
+          component_group:      groupName,
+          component_category_id: catId,
+          sort_order:           i,
+        });
+      }
+    });
+    if (rows.length) {
+      const { error: ce } = await sb.from('set_components').insert(rows);
+      if (ce) { toast('Error saving groups: ' + ce.message, 'error'); return false; }
     }
   }
 
-  if (it) menuItems=menuItems.map(x=>x.id===it.id?data:x);
-  else menuItems.unshift(data);
+  if (it) menuItems = menuItems.map(x => x.id === it.id ? data : x);
+  else    menuItems.unshift(data);
   renderMenu();
-  toast(it?'Item updated!':'Item added!','success');
+  toast(it ? 'Set updated!' : 'Set added!', 'success');
   return true;
 }
 
