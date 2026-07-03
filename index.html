@@ -784,11 +784,14 @@ document.getElementById('place-btn').addEventListener('click', async () => {
   btn.disabled = true; btn.textContent = 'Placing order…';
 
   const { total } = cartTotal();
-  const notes = document.getElementById('f-notes').value.trim() || null;
+  const notesVal = document.getElementById('f-notes').value.trim() || null;
 
-  const { data: order, error } = await sb.from('orders').insert({
-    table_num: tableNum, status: 'pending', total: Math.round(total), notes,
-  }).select().single();
+  // Build order row — only send columns that exist in the schema
+  // notes column added via migrate.sql; safe to include after running migration
+  const orderRow = { table_num: tableNum, status: 'pending', total: Math.round(total) };
+  if (notesVal) orderRow.notes = notesVal;
+
+  const { data: order, error } = await sb.from('orders').insert(orderRow).select().single();
 
   if (error) {
     toast('Error: ' + error.message, 'error');
@@ -797,11 +800,14 @@ document.getElementById('place-btn').addEventListener('click', async () => {
     return;
   }
 
-  // Each cart entry becomes ONE order_item (main dish)
-  // If it has a set, we also insert a second order_item for the set
-  const itemRows = [];
-  cart.forEach(e => {
-    // Main dish
+  // Build flat list of order_item rows.
+  // For each cart entry: one main-dish row + optionally one set row.
+  // We record which cart index has a set so we can map back afterwards.
+  const itemRows   = [];
+  const setMap     = []; // [{cartIdx, setRowIdx}] — tells us which itemRows index is the set
+
+  cart.forEach((e, cartIdx) => {
+    // Main dish row
     itemRows.push({
       order_id:     order.id,
       menu_item_id: e.id,
@@ -814,8 +820,10 @@ document.getElementById('place-btn').addEventListener('click', async () => {
       unit_price:   e.mainPrice,
       prep_status:  JSON.stringify(Array(e.qty).fill(false)),
     });
-    // Set item (if chosen)
+
+    // Set side row (if customer chose a set)
     if (e.set) {
+      setMap.push({ cartIdx, setRowIdx: itemRows.length }); // index BEFORE pushing
       itemRows.push({
         order_id:     order.id,
         menu_item_id: e.set.id,
@@ -827,33 +835,41 @@ document.getElementById('place-btn').addEventListener('click', async () => {
         quantity:     e.qty,
         unit_price:   e.set.price,
         prep_status:  JSON.stringify(Array(e.qty).fill(false)),
-        // store chosen sides as a note in the snapshot
       });
     }
   });
 
-  const { data: insertedItems } = await sb.from('order_items').insert(itemRows).select();
+  const { data: insertedItems, error: itemsErr } = await sb
+    .from('order_items').insert(itemRows).select();
 
-  // Insert set component snapshots (the chosen salad/soup etc.)
+  if (itemsErr) {
+    toast('Error saving items: ' + itemsErr.message, 'error');
+    // Still clear cart — order header was created
+    cart = []; refreshBadge();
+    return;
+  }
+
+  // Insert choice snapshots for each set row
+  // Use setMap to reliably find the correct inserted row ID
   const compRows = [];
-  let setItemIdx = 0; // tracks which inserted row is a set row
-  cart.forEach(e => {
-    setItemIdx++; // skip the main dish row
-    if (!e.set) return;
-    // The set order_item is the next row
-    const setOI = insertedItems?.[setItemIdx];
-    if (!setOI) { setItemIdx++; return; }
-    Object.entries(e.choices || {}).forEach(([g, c]) => {
+  setMap.forEach(({ cartIdx, setRowIdx }) => {
+    const cartEntry = cart[cartIdx];
+    const setOI     = insertedItems?.[setRowIdx];
+    if (!setOI || !cartEntry?.choices) return;
+    Object.entries(cartEntry.choices).forEach(([g, c]) => {
       compRows.push({
-        order_item_id:  setOI.id,
-        component_name: c.name,
-        component_emoji:c.emoji,
-        component_image:c.image || null,
+        order_item_id:   setOI.id,
+        component_name:  c.name,
+        component_emoji: c.emoji || '',
+        component_image: c.image || null,
       });
     });
-    setItemIdx++;
   });
-  if (compRows.length) await sb.from('order_item_components').insert(compRows);
+
+  if (compRows.length) {
+    const { error: compErr } = await sb.from('order_item_components').insert(compRows);
+    if (compErr) console.warn('Component save error:', compErr.message);
+  }
 
   cart = []; refreshBadge();
   document.getElementById('s-num').textContent = '#' + padNum(order.order_number);
