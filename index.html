@@ -310,6 +310,62 @@ img{display:block;max-width:100%}
 }
 .set-price-tag .sp{font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:700;color:var(--mustard)}
 
+/* Multi-set selector */
+.set-upsell-hd-plain{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.set-sections{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+
+/* One set option row */
+.set-section{
+  border:2px solid var(--border);border-radius:var(--r);
+  overflow:hidden;transition:border-color .15s;
+}
+.set-section.active{border-color:var(--mustard)}
+
+.set-row{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;cursor:pointer;
+  background:#fff;transition:background .12s;
+}
+.set-row:hover{background:#fffdf5}
+.set-row.picked{background:#fffbe6}
+
+.set-row-radio{
+  width:22px;height:22px;border-radius:50%;
+  border:2px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.set-row.picked .set-row-radio{border-color:var(--mustard);background:var(--mustard)}
+.set-row-dot{
+  width:9px;height:9px;border-radius:50%;background:#fff;
+  display:none;
+}
+.set-row.picked .set-row-dot{display:block}
+
+.set-row-info{flex:1;min-width:0}
+.set-row-name{font-size:.9rem;font-weight:800;color:var(--text);line-height:1.2}
+.set-row-desc{font-size:.75rem;color:var(--text3);margin-top:1px}
+.set-row-price{font-family:'Fredoka',sans-serif;font-size:1rem;font-weight:700;color:var(--mustard);flex-shrink:0}
+
+/* Expandable choice area inside each set */
+.set-choices-inner{
+  display:none;flex-direction:column;gap:10px;
+  padding:12px 14px;background:#fffbf2;
+  border-top:1px solid #f0e8cc;
+}
+.set-choices-inner.open{display:flex}
+
+/* Skip button */
+.set-skip-btn{
+  width:100%;padding:10px;margin-top:6px;
+  border:1.5px dashed var(--border);border-radius:var(--r);
+  font-size:.82rem;font-weight:700;color:var(--text3);
+  background:none;cursor:pointer;transition:all .15s;
+  text-align:center;
+}
+.set-skip-btn:hover{border-color:var(--text3);color:var(--text2);background:#faf8f4}
+.set-skip-btn.active{border-color:var(--text);color:var(--text);background:#f5f2ec}
+
 /* Qty + Add button at bottom of detail */
 .detail-footer{
   display:flex;align-items:center;gap:12px;
@@ -647,11 +703,11 @@ var nextCartId = 1;
 var activeCat  = 'all';
 
 // detail modal state
-var dItem    = null;   // item being viewed
-var dSetItem = null;   // available set for this item
-var dChoices = {};     // group -> {id,name,emoji,image}
-var dQty     = 1;
-var dSetOn   = false;
+var dItem       = null;   // item being viewed
+var dAllSets    = [];     // all available set menus [{setItem, groups}]
+var dPickedSet  = null;   // which set the customer chose (null = none)
+var dChoices    = {};     // group_name -> {id,name,emoji,image}
+var dQty        = 1;
 
 // ── Boot ──────────────────────────────────────────────────
 (async function() {
@@ -827,71 +883,115 @@ async function openDetail(itemId) {
   document.getElementById('detail-price').textContent = fmt(dItem.price, sym);
   document.getElementById('d-qty-num').textContent    = '1';
 
-  // Find an available set to upsell
-  var availSet = setMenus.find(function(s) {
+  // Collect ALL available sets that have groups configured
+  dAllSets = setMenus.filter(function(s) {
     return s.available && setGroups[s.id] && setGroups[s.id].length > 0;
   });
-  dSetItem = availSet || null;
+  dPickedSet = null;
+  dChoices   = {};
 
   var setArea = document.getElementById('detail-set-area');
-  if (dSetItem) {
+
+  if (!dAllSets.length) {
+    setArea.innerHTML = '';
+  } else {
+    // Gather all unique category IDs needed across every set
+    var allCatIds = [];
+    dAllSets.forEach(function(s) {
+      setGroups[s.id].forEach(function(g) {
+        if (allCatIds.indexOf(g.category_id) === -1) allCatIds.push(g.category_id);
+      });
+    });
+
     setArea.innerHTML = '<div class="loading-grid" style="padding:16px 0"><div class="spin"></div></div>';
-    var groups = setGroups[dSetItem.id];
-    var catIds = groups.map(function(g) { return g.category_id; });
 
-    // Load all items from those categories
-    var res = await sb.from('menu_items').select('*').in('category_id', catIds).eq('available', true).eq('is_set', false);
-    var choiceItems = res.data || [];
+    // Load choice items once for all sets
+    var res = await sb.from('menu_items').select('*')
+      .in('category_id', allCatIds).eq('available', true).eq('is_set', false);
+    var allChoiceItems = res.data || [];
 
-    var groupsHtml = groups.map(function(g) {
-      var opts = choiceItems.filter(function(i) { return i.category_id === g.category_id; });
-      return '<div class="choice-group-label">' + esc(g.group_name) + ' <span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--text3)">— choose one</span></div>'
-        + '<div class="choice-options" data-group="' + esc(g.group_name) + '">'
-        + opts.map(function(opt) {
+    // Build UI: one collapsible section per set, radio to select which set
+    var sectionsHtml = dAllSets.map(function(setItem, si) {
+      var groups = setGroups[setItem.id];
+      var groupsHtml = groups.map(function(g) {
+        var opts = allChoiceItems.filter(function(i) { return i.category_id === g.category_id; });
+        var optsHtml = opts.map(function(opt) {
           var oi = opt.image_url
             ? '<img src="' + esc(opt.image_url) + '" loading="lazy"/>'
             : (opt.emoji || '🍽');
-          return '<div class="choice-opt" data-group="' + esc(g.group_name) + '" data-id="' + opt.id + '" data-name="' + esc(opt.name_jp || opt.name) + '" data-emoji="' + esc(opt.emoji || '🍽') + '" data-image="' + esc(opt.image_url || '') + '">'
+          return '<div class="choice-opt"'
+            + ' data-setidx="' + si + '"'
+            + ' data-group="' + esc(g.group_name) + '"'
+            + ' data-id="' + opt.id + '"'
+            + ' data-name="' + esc(opt.name_jp || opt.name) + '"'
+            + ' data-emoji="' + esc(opt.emoji || '🍽') + '"'
+            + ' data-image="' + esc(opt.image_url || '') + '">'
             + '<div class="choice-opt-img">' + oi + '</div>'
             + '<div class="choice-opt-name">' + esc(opt.name_jp || opt.name)
             + (opt.name && opt.name_jp ? '<div class="choice-opt-jp">' + esc(opt.name) + '</div>' : '')
             + '</div>'
             + '<div class="choice-radio"></div>'
             + '</div>';
-        }).join('')
+        }).join('');
+        return '<div class="choice-group-label">' + esc(g.group_name)
+          + ' <span style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--text3)">— choose one</span></div>'
+          + '<div class="choice-options">' + optsHtml + '</div>';
+      }).join('');
+
+      return '<div class="set-section" data-setidx="' + si + '">'
+        // Row: radio + set info + price
+        + '<div class="set-row" data-setidx="' + si + '">'
+        + '<div class="set-row-radio"><div class="set-row-dot"></div></div>'
+        + '<div class="set-row-info">'
+        + '<div class="set-row-name">' + esc(setItem.name_jp || setItem.name) + '</div>'
+        + '<div class="set-row-desc">' + esc(setItem.description || '') + '</div>'
+        + '</div>'
+        + '<div class="set-row-price">+' + fmt(setItem.price, sym) + '</div>'
+        + '</div>'
+        // Collapsible choice area (hidden until this set is selected)
+        + '<div class="set-choices-inner" id="set-inner-' + si + '">' + groupsHtml + '</div>'
         + '</div>';
     }).join('');
 
     setArea.innerHTML = '<div class="set-upsell-section">'
-      + '<div class="set-upsell-hd">'
+      + '<div class="set-upsell-hd-plain">'
       + '<span class="set-upsell-icon">🍱</span>'
-      + '<div><div class="set-upsell-title">' + esc(dSetItem.name_jp || dSetItem.name) + '</div>'
-      + '<div class="set-upsell-sub">' + esc(dSetItem.description || 'Add sides to your meal') + '</div></div>'
-      + '<label class="set-toggle"><input type="checkbox" id="set-toggle-cb"/><span class="set-toggle-slider"></span></label>'
+      + '<div><div class="set-upsell-title">Add a Set?</div>'
+      + '<div class="set-upsell-sub">Choose one — or skip</div></div>'
       + '</div>'
-      + '<div class="set-choices" id="set-choices-wrap">' + groupsHtml + '</div>'
-      + '<div class="set-price-tag">Set upgrade price <span class="sp">+' + fmt(dSetItem.price, sym) + '</span></div>'
+      + '<div class="set-sections">' + sectionsHtml + '</div>'
+      + '<button class="set-skip-btn" id="set-skip-btn">No set — just the main dish</button>'
       + '</div>';
 
-    document.getElementById('set-toggle-cb').addEventListener('change', function() {
-      dSetOn = this.checked;
-      document.getElementById('set-choices-wrap').classList.toggle('open', dSetOn);
-      dChoices = {};
-      document.querySelectorAll('.choice-opt').forEach(function(o) { o.classList.remove('picked'); });
-      refreshDetailBtn();
+    // Wire set-row clicks (selecting a set)
+    setArea.querySelectorAll('.set-row').forEach(function(row) {
+      row.addEventListener('click', function() {
+        var si = parseInt(row.dataset.setidx);
+        selectSet(si, setArea);
+      });
     });
 
+    // Wire skip
+    document.getElementById('set-skip-btn').addEventListener('click', function() {
+      deselectSet(setArea);
+    });
+
+    // Wire choice option clicks
     setArea.querySelectorAll('.choice-opt').forEach(function(opt) {
       opt.addEventListener('click', function() {
-        var g = opt.dataset.group;
-        setArea.querySelectorAll('.choice-opt[data-group="' + g + '"]').forEach(function(o) { o.classList.remove('picked'); });
+        var si = parseInt(opt.dataset.setidx);
+        var g  = opt.dataset.group;
+        // Only allow picking if this set is currently selected
+        if (!dPickedSet || dPickedSet.idx !== si) {
+          selectSet(si, setArea);
+        }
+        setArea.querySelectorAll('.choice-opt[data-setidx="' + si + '"][data-group="' + g + '"]')
+          .forEach(function(o) { o.classList.remove('picked'); });
         opt.classList.add('picked');
         dChoices[g] = { id: opt.dataset.id, name: opt.dataset.name, emoji: opt.dataset.emoji, image: opt.dataset.image };
         refreshDetailBtn();
       });
     });
-  } else {
-    setArea.innerHTML = '';
   }
 
   refreshDetailBtn();
@@ -900,23 +1000,63 @@ async function openDetail(itemId) {
 
 function closeDetail() {
   document.getElementById('detail-bg').classList.remove('open');
-  dItem = null; dSetItem = null; dChoices = {}; dQty = 1; dSetOn = false;
+  dItem = null; dAllSets = []; dPickedSet = null; dChoices = {}; dQty = 1;
+}
+
+function selectSet(si, setArea) {
+  dPickedSet = { idx: si, setItem: dAllSets[si] };
+  dChoices   = {};
+  // Update radio dots
+  setArea.querySelectorAll('.set-row').forEach(function(r) {
+    r.classList.toggle('picked', parseInt(r.dataset.setidx) === si);
+  });
+  // Show/hide choice areas
+  setArea.querySelectorAll('.set-choices-inner').forEach(function(inner, i) {
+    inner.classList.toggle('open', i === si);
+  });
+  // Clear picked choices in all options
+  setArea.querySelectorAll('.choice-opt').forEach(function(o) { o.classList.remove('picked'); });
+  // Update skip button style
+  var skipBtn = document.getElementById('set-skip-btn');
+  if (skipBtn) skipBtn.classList.remove('active');
+  setArea.querySelectorAll('.set-section').forEach(function(s, i) {
+    s.classList.toggle('active', i === si);
+  });
+  refreshDetailBtn();
+}
+
+function deselectSet(setArea) {
+  dPickedSet = null;
+  dChoices   = {};
+  setArea.querySelectorAll('.set-row').forEach(function(r) { r.classList.remove('picked'); });
+  setArea.querySelectorAll('.set-choices-inner').forEach(function(inner) { inner.classList.remove('open'); });
+  setArea.querySelectorAll('.choice-opt').forEach(function(o) { o.classList.remove('picked'); });
+  setArea.querySelectorAll('.set-section').forEach(function(s) { s.classList.remove('active'); });
+  var skipBtn = document.getElementById('set-skip-btn');
+  if (skipBtn) skipBtn.classList.add('active');
+  refreshDetailBtn();
 }
 
 function refreshDetailBtn() {
-  var btn      = document.getElementById('d-add-btn');
-  var sym      = settings.currency || '¥';
-  var groups   = dSetItem ? setGroups[dSetItem.id] || [] : [];
-  var allPicked = dSetOn ? groups.every(function(g) { return dChoices[g.group_name]; }) : true;
-  var missing  = dSetOn ? groups.filter(function(g) { return !dChoices[g.group_name]; }) : [];
-  var totalPrice = (dItem ? parseFloat(dItem.price) : 0) + (dSetOn && dSetItem ? parseFloat(dSetItem.price) : 0);
+  var btn = document.getElementById('d-add-btn');
+  var sym = settings.currency || '¥';
 
-  btn.disabled = dSetOn && !allPicked;
-  if (dSetOn && !allPicked) {
-    btn.textContent = 'Choose your ' + (missing[0] ? missing[0].group_name : 'options');
-  } else {
-    btn.textContent = 'Add to Order — ' + fmt(totalPrice * dQty, sym);
+  if (!dPickedSet) {
+    // No set chosen — just add main item
+    btn.disabled    = false;
+    btn.textContent = 'Add to Order — ' + fmt((dItem ? parseFloat(dItem.price) : 0) * dQty, sym);
+    return;
   }
+
+  // Set chosen — check all groups have a choice
+  var groups  = setGroups[dPickedSet.setItem.id] || [];
+  var missing = groups.filter(function(g) { return !dChoices[g.group_name]; });
+  var total   = (dItem ? parseFloat(dItem.price) : 0) + parseFloat(dPickedSet.setItem.price);
+
+  btn.disabled = missing.length > 0;
+  btn.textContent = missing.length > 0
+    ? 'Choose your ' + missing[0].group_name
+    : 'Add to Order — ' + fmt(total * dQty, sym);
 }
 
 // Qty buttons in detail
@@ -933,6 +1073,8 @@ document.getElementById('d-qty-inc').addEventListener('click', function() {
 
 document.getElementById('d-add-btn').addEventListener('click', function() {
   if (!dItem) return;
+  var hasSet  = dPickedSet !== null;
+  var setItem = hasSet ? dPickedSet.setItem : null;
   cart.push({
     cartId:    nextCartId++,
     id:        dItem.id,
@@ -941,15 +1083,15 @@ document.getElementById('d-add-btn').addEventListener('click', function() {
     emoji:     dItem.emoji || '🍽',
     image_url: dItem.image_url || '',
     mainPrice: parseFloat(dItem.price),
-    price:     parseFloat(dItem.price) + (dSetOn && dSetItem ? parseFloat(dSetItem.price) : 0),
+    price:     parseFloat(dItem.price) + (setItem ? parseFloat(setItem.price) : 0),
     qty:       dQty,
-    set:       dSetOn && dSetItem ? { id: dSetItem.id, name: dSetItem.name, name_jp: dSetItem.name_jp || '', price: parseFloat(dSetItem.price) } : null,
-    choices:   dSetOn ? Object.assign({}, dChoices) : {},
+    set:       setItem ? { id: setItem.id, name: setItem.name, name_jp: setItem.name_jp || '', price: parseFloat(setItem.price) } : null,
+    choices:   hasSet ? Object.assign({}, dChoices) : {},
   });
   closeDetail();
   refreshBadge();
   renderCart();
-  toast((dSetOn ? 'Set added! 🍱' : 'Added! 🛒'), 'success');
+  toast(hasSet ? 'Set added! 🍱' : 'Added to order! 🛒', 'success');
 });
 
 document.getElementById('detail-bg').addEventListener('click', function(e) {
