@@ -852,11 +852,11 @@ function buildCard(it) {
 
 // ── Detail modal ──────────────────────────────────────────
 async function openDetail(itemId) {
-  dItem      = items.find(function(x) { return x.id === itemId; });
-  dAllSets   = [];
-  dPickedSet = null;
-  dChoices   = {};
-  dQty       = 1;
+  dItem    = items.find(function(x) { return x.id === itemId; });
+  dSetItem = null;
+  dChoices = {};
+  dQty     = 1;
+  dSetOn   = false;
   if (!dItem) return;
 
   var sym = settings.currency || '¥';
