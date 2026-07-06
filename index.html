@@ -753,7 +753,10 @@ async function loadMenu() {
 
   categories = r1.data || [];
   var allItems = r2.data || [];
-  items    = allItems.filter(function(i) { return !i.is_set; });
+  // is_set=true  → set menu (not shown in main grid, used for upsell)
+  // has_set=false → component-only item (hidden from customer menu)
+  // has_set=true/undefined → normal item, shown in grid
+  items    = allItems.filter(function(i) { return !i.is_set && i.has_set !== false; });
   setMenus = allItems.filter(function(i) { return  i.is_set; });
 
   setGroups = {};
@@ -883,10 +886,12 @@ async function openDetail(itemId) {
   document.getElementById('detail-price').textContent = fmt(dItem.price, sym);
   document.getElementById('d-qty-num').textContent    = '1';
 
-  // Collect ALL available sets that have groups configured
-  dAllSets = setMenus.filter(function(s) {
+  // Only offer sets if this item has has_set enabled
+  // has_set undefined (old rows) → treat as true
+  var itemAllowsSet = dItem.has_set !== false;
+  dAllSets = itemAllowsSet ? setMenus.filter(function(s) {
     return s.available && setGroups[s.id] && setGroups[s.id].length > 0;
-  });
+  }) : [];
   dPickedSet = null;
   dChoices   = {};
 
