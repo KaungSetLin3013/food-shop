@@ -753,10 +753,10 @@ async function loadMenu() {
 
   categories = r1.data || [];
   var allItems = r2.data || [];
-  // is_set=true  → set menu (not shown in main grid, used for upsell)
-  // has_set=false → component-only item (hidden from customer menu)
-  // has_set=true/undefined → normal item, shown in grid
-  items    = allItems.filter(function(i) { return !i.is_set && i.has_set !== false; });
+  // is_set=true  → set menu definition (not in main grid, used for upsell only)
+  // has_set=false → item shown on menu but WITHOUT set upsell
+  // has_set=true/undefined → item shown on menu WITH set upsell offered
+  items    = allItems.filter(function(i) { return !i.is_set && i.available; });
   setMenus = allItems.filter(function(i) { return  i.is_set; });
 
   setGroups = {};
