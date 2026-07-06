@@ -684,9 +684,9 @@ function buildItemRow(it, sym, isSet) {
   const hasSet  = it.has_set !== false;
   const metaLine = isSet
     ? (it.available ? '✅ Offered to customers' : '🚫 Hidden')
-    : `${cat ? esc(cat.name) : '—'} · ${it.available ? '✅ On menu' : '🚫 Hidden'} · Set: ${hasSet ? '✅ Can add set' : '🚫 No set'}`;
+    : `${cat ? esc(cat.name) : '—'} · ${it.available ? '✅ On menu' : '🚫 Hidden'} · ${hasSet ? '🍱 Set upsell ON' : '🍽 Individual only'}`;
   return `
-    <div class="irow ${!it.available || (!isSet && !hasSet) ? 'irow-dim' : ''}">
+    <div class="irow ${!it.available ? 'irow-dim' : ''}">
       <div class="irow-img">${img}</div>
       <div class="irow-info">
         <div class="irow-name">${esc(it.name)}</div>
@@ -695,7 +695,7 @@ function buildItemRow(it, sym, isSet) {
       </div>
       <div class="irow-price">${isSet ? '+' : ''}${fmt(it.price, sym)}</div>
       <div class="irow-actions">
-        ${!isSet ? `<button class="btn btn-sm ${hasSet ? 'btn-mint' : 'btn-ghost'}" title="${hasSet ? 'Disable set upsell' : 'Enable set upsell'}" onclick="toggleHasSet('${it.id}',${hasSet})">🍱 ${hasSet ? 'Set ON' : 'Set OFF'}</button>` : ''}
+        ${!isSet ? `<button class="btn btn-sm ${hasSet ? 'btn-mint' : 'btn-ghost'}" title="${hasSet ? 'Click to hide set upsell (item still orderable individually)' : 'Click to offer set upsell after this item'}" onclick="toggleHasSet('${it.id}',${hasSet})">🍱 ${hasSet ? 'Set ON' : 'Set OFF'}</button>` : ''}
         <button class="btn btn-mint btn-sm" onclick="toggleAvail('${it.id}',${it.available})">${it.available ? 'Hide' : 'Show'}</button>
         <button class="btn btn-edit btn-sm" onclick="${editFn}">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteItem('${it.id}')">Delete</button>
@@ -732,7 +732,7 @@ window.openRegularItemModal = async function(id) {
       <div class="fld fld-full"><label>Description</label><textarea id="mi-desc" placeholder="Short description…" maxlength="180">${esc(it?.description||'')}</textarea></div>
       <div class="fld"><label>Price *</label><input id="mi-price" type="number" value="${it?.price||''}" min="0" step="1"/></div>
       <div class="chk-label"><input type="checkbox" id="mi-avail" ${!it||it.available?'checked':''}/> Visible on customer menu</div>
-      <div class="chk-label"><input type="checkbox" id="mi-has-set" ${it?.has_set !== false?'checked':''}/> Customer can add a Set to this item</div>
+      <div class="chk-label"><input type="checkbox" id="mi-has-set" ${it?.has_set !== false?'checked':''}/> Offer set upsell when ordering (OFF = item still orderable individually)</div>
     </div>`;
 
   const modal = document.getElementById('_modal_bg') || createModalEl();
