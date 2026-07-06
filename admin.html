@@ -94,6 +94,7 @@ input,select,textarea{font-family:inherit}
 .irow-meta{font-size:.73rem;color:var(--text3);margin-top:2px}
 .irow-price{font-family:'Fredoka',sans-serif;font-weight:700;color:var(--mustard);font-size:.92rem;flex-shrink:0}
 .irow-actions{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap}
+.irow-dim{opacity:.55}
 
 /* BUTTONS */
 .btn{padding:7px 14px;border-radius:8px;font-size:.78rem;font-weight:800;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
@@ -676,25 +677,39 @@ window.renderMenu = function() {
 }
 
 function buildItemRow(it, sym, isSet) {
-  const cat   = categories.find(c => c.id === it.category_id);
-  const img   = it.image_url ? `<img src="${esc(it.image_url)}" loading="lazy"/>` : (it.emoji || (isSet ? '🍱' : '🍽'));
+  const cat    = categories.find(c => c.id === it.category_id);
+  const img    = it.image_url ? `<img src="${esc(it.image_url)}" loading="lazy"/>` : (it.emoji || (isSet ? '🍱' : '🍽'));
   const editFn = isSet ? `openItemModal('${it.id}')` : `openRegularItemModal('${it.id}')`;
+  // has_set: undefined on old rows → treat as true (visible)
+  const hasSet  = it.has_set !== false;
+  const metaLine = isSet
+    ? (it.available ? '✅ Offered to customers' : '🚫 Hidden')
+    : `${cat ? esc(cat.name) : '—'} · ${it.available ? '✅ On menu' : '🚫 Hidden'} · Set: ${hasSet ? '✅ Can add set' : '🚫 No set'}`;
   return `
-    <div class="irow">
+    <div class="irow ${!it.available || (!isSet && !hasSet) ? 'irow-dim' : ''}">
       <div class="irow-img">${img}</div>
       <div class="irow-info">
         <div class="irow-name">${esc(it.name)}</div>
         ${it.name_jp ? `<div class="irow-jp">${esc(it.name_jp)}</div>` : ''}
-        <div class="irow-meta">${cat ? esc(cat.name) : '—'} · ${it.available ? '✅ Available' : '🚫 Hidden'}</div>
+        <div class="irow-meta">${metaLine}</div>
       </div>
       <div class="irow-price">${isSet ? '+' : ''}${fmt(it.price, sym)}</div>
       <div class="irow-actions">
-        <button class="btn btn-mint btn-sm" onclick="toggleAvail('${it.id}',${it.available})">${it.available ? 'Disable' : 'Enable'}</button>
+        ${!isSet ? `<button class="btn btn-sm ${hasSet ? 'btn-mint' : 'btn-ghost'}" title="${hasSet ? 'Disable set upsell' : 'Enable set upsell'}" onclick="toggleHasSet('${it.id}',${hasSet})">🍱 ${hasSet ? 'Set ON' : 'Set OFF'}</button>` : ''}
+        <button class="btn btn-mint btn-sm" onclick="toggleAvail('${it.id}',${it.available})">${it.available ? 'Hide' : 'Show'}</button>
         <button class="btn btn-edit btn-sm" onclick="${editFn}">Edit</button>
         <button class="btn btn-danger btn-sm" onclick="deleteItem('${it.id}')">Delete</button>
       </div>
     </div>`;
 }
+
+window.toggleHasSet = async function(id, current) {
+  const { data, error } = await sb.from('menu_items').update({ has_set: !current }).eq('id', id).select().single();
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  menuItems = menuItems.map(x => x.id === id ? data : x);
+  renderMenu();
+  toast(!current ? 'Set upsell enabled ✅' : 'Set upsell disabled 🚫', 'success');
+};
 
 // Regular (non-set) item modal
 window.openRegularItemModal = async function(id) {
@@ -716,7 +731,8 @@ window.openRegularItemModal = async function(id) {
       <div class="fld"><label>Category</label><select id="mi-cat"><option value="">— none —</option>${catOpts}</select></div>
       <div class="fld fld-full"><label>Description</label><textarea id="mi-desc" placeholder="Short description…" maxlength="180">${esc(it?.description||'')}</textarea></div>
       <div class="fld"><label>Price *</label><input id="mi-price" type="number" value="${it?.price||''}" min="0" step="1"/></div>
-      <div class="chk-label"><input type="checkbox" id="mi-avail" ${!it||it.available?'checked':''}/> Available for ordering</div>
+      <div class="chk-label"><input type="checkbox" id="mi-avail" ${!it||it.available?'checked':''}/> Visible on customer menu</div>
+      <div class="chk-label"><input type="checkbox" id="mi-has-set" ${it?.has_set !== false?'checked':''}/> Customer can add a Set to this item</div>
     </div>`;
 
   const modal = document.getElementById('_modal_bg') || createModalEl();
@@ -757,6 +773,7 @@ window.openRegularItemModal = async function(id) {
       price, image_url: document.getElementById('img-url')?.value||it?.image_url||null,
       category_id: document.getElementById('mi-cat').value||null,
       available: document.getElementById('mi-avail').checked,
+      has_set:   document.getElementById('mi-has-set').checked,
       is_set: false,
     };
     const {data,error} = it
