@@ -682,9 +682,12 @@ function buildItemRow(it, sym, isSet) {
   const editFn = isSet ? `openItemModal('${it.id}')` : `openRegularItemModal('${it.id}')`;
   // has_set: undefined on old rows → treat as true (visible)
   const hasSet  = it.has_set !== false;
+  const setInfo = !isSet && hasSet
+    ? (it.set_price ? `🍱 Set: +${fmt(it.set_price, sym)}` : '🍱 Set: default price')
+    : (!isSet ? '🍽 Individual only' : '');
   const metaLine = isSet
     ? (it.available ? '✅ Offered to customers' : '🚫 Hidden')
-    : `${cat ? esc(cat.name) : '—'} · ${it.available ? '✅ On menu' : '🚫 Hidden'} · ${hasSet ? '🍱 Set upsell ON' : '🍽 Individual only'}`;
+    : `${cat ? esc(cat.name) : '—'} · ${it.available ? '✅ On menu' : '🚫 Hidden'} · ${setInfo}`;
   return `
     <div class="irow ${!it.available ? 'irow-dim' : ''}">
       <div class="irow-img">${img}</div>
@@ -730,9 +733,13 @@ window.openRegularItemModal = async function(id) {
       <div class="fld"><label>Emoji</label><input id="mi-emoji" value="${esc(it?.emoji||'')}" placeholder="🍜" maxlength="4"/></div>
       <div class="fld"><label>Category</label><select id="mi-cat"><option value="">— none —</option>${catOpts}</select></div>
       <div class="fld fld-full"><label>Description</label><textarea id="mi-desc" placeholder="Short description…" maxlength="180">${esc(it?.description||'')}</textarea></div>
-      <div class="fld"><label>Price *</label><input id="mi-price" type="number" value="${it?.price||''}" min="0" step="1"/></div>
+      <div class="fld"><label>Normal Price *</label><input id="mi-price" type="number" value="${it?.price||''}" min="0" step="1" placeholder="e.g. 500"/></div>
+      <div class="fld" id="set-price-field" style="display:${it?.has_set !== false ? 'flex' : 'none'}">
+        <label>Set Upgrade Price <span style="font-size:.7rem;color:var(--text3);font-weight:600">(charged when ordered with a set — leave blank to use set menu's price)</span></label>
+        <input id="mi-set-price" type="number" value="${it?.set_price||''}" min="0" step="1" placeholder="e.g. 150 (optional)"/>
+      </div>
       <div class="chk-label"><input type="checkbox" id="mi-avail" ${!it||it.available?'checked':''}/> Visible on customer menu</div>
-      <div class="chk-label"><input type="checkbox" id="mi-has-set" ${it?.has_set !== false?'checked':''}/> Offer set upsell when ordering (OFF = item still orderable individually)</div>
+      <div class="chk-label"><input type="checkbox" id="mi-has-set" ${it?.has_set !== false?'checked':''} onchange="document.getElementById('set-price-field').style.display=this.checked?'flex':'none'"/> Offer set upsell when ordering (OFF = item still orderable individually)</div>
     </div>`;
 
   const modal = document.getElementById('_modal_bg') || createModalEl();
@@ -766,6 +773,7 @@ window.openRegularItemModal = async function(id) {
     const price = parseFloat(document.getElementById('mi-price').value);
     if (!name)        { toast('Name is required','error'); return; }
     if (isNaN(price)) { toast('Price is required','error'); return; }
+    const setPriceVal = document.getElementById('mi-set-price')?.value;
     const payload = {
       name, name_jp: document.getElementById('mi-jp').value.trim()||null,
       emoji: document.getElementById('mi-emoji').value.trim()||'🍽',
@@ -774,6 +782,7 @@ window.openRegularItemModal = async function(id) {
       category_id: document.getElementById('mi-cat').value||null,
       available: document.getElementById('mi-avail').checked,
       has_set:   document.getElementById('mi-has-set').checked,
+      set_price: setPriceVal ? parseFloat(setPriceVal) : null,
       is_set: false,
     };
     const {data,error} = it
