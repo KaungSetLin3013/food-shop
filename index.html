@@ -924,17 +924,22 @@ async function openDetail(itemId) {
           var oi = opt.image_url
             ? '<img src="' + esc(opt.image_url) + '" loading="lazy"/>'
             : (opt.emoji || '🍽');
+          var spLabel = opt.set_price != null
+            ? '<span style="margin-left:auto;font-family:Fredoka,sans-serif;font-size:.85rem;font-weight:700;color:#a07800;flex-shrink:0">+' + fmt(opt.set_price, sym) + '</span>'
+            : '';
           return '<div class="choice-opt"'
             + ' data-setidx="' + si + '"'
             + ' data-group="' + esc(g.group_name) + '"'
             + ' data-id="' + opt.id + '"'
             + ' data-name="' + esc(opt.name_jp || opt.name) + '"'
             + ' data-emoji="' + esc(opt.emoji || '🍽') + '"'
-            + ' data-image="' + esc(opt.image_url || '') + '">'
+            + ' data-image="' + esc(opt.image_url || '') + '"'
+            + ' data-setprice="' + (opt.set_price != null ? opt.set_price : '') + '">'
             + '<div class="choice-opt-img">' + oi + '</div>'
             + '<div class="choice-opt-name">' + esc(opt.name_jp || opt.name)
             + (opt.name && opt.name_jp ? '<div class="choice-opt-jp">' + esc(opt.name) + '</div>' : '')
             + '</div>'
+            + spLabel
             + '<div class="choice-radio"></div>'
             + '</div>';
         }).join('');
@@ -951,7 +956,7 @@ async function openDetail(itemId) {
         + '<div class="set-row-name">' + esc(setItem.name_jp || setItem.name) + '</div>'
         + '<div class="set-row-desc">' + esc(setItem.description || '') + '</div>'
         + '</div>'
-        + '<div class="set-row-price">+' + fmt(dItem && dItem.set_price != null ? dItem.set_price : setItem.price, sym) + '</div>'
+        + '<div class="set-row-price" id="set-row-price-' + si + '">Select options</div>'
         + '</div>'
         // Collapsible choice area (hidden until this set is selected)
         + '<div class="set-choices-inner" id="set-inner-' + si + '">' + groupsHtml + '</div>'
@@ -993,7 +998,14 @@ async function openDetail(itemId) {
         setArea.querySelectorAll('.choice-opt[data-setidx="' + si + '"][data-group="' + g + '"]')
           .forEach(function(o) { o.classList.remove('picked'); });
         opt.classList.add('picked');
-        dChoices[g] = { id: opt.dataset.id, name: opt.dataset.name, emoji: opt.dataset.emoji, image: opt.dataset.image };
+        dChoices[g] = {
+          id:       opt.dataset.id,
+          name:     opt.dataset.name,
+          emoji:    opt.dataset.emoji,
+          image:    opt.dataset.image,
+          setPrice: opt.dataset.setprice !== '' ? parseFloat(opt.dataset.setprice) : null,
+        };
+        updateSetRowPrice(parseInt(opt.dataset.setidx));
         refreshDetailBtn();
       });
     });
@@ -1008,9 +1020,46 @@ function closeDetail() {
   dItem = null; dAllSets = []; dPickedSet = null; dChoices = {}; dQty = 1;
 }
 
+// Sum set_price of all chosen components for the current set
+function calcSetUpgrade() {
+  if (!dPickedSet) return 0;
+  var groups = setGroups[dPickedSet.setItem.id] || [];
+  var total  = 0;
+  var allHavePrice = true;
+  groups.forEach(function(g) {
+    var choice = dChoices[g.group_name];
+    if (choice && choice.setPrice != null) {
+      total += choice.setPrice;
+    } else {
+      allHavePrice = false;
+    }
+  });
+  return allHavePrice ? total : null; // null = not all chosen yet
+}
+
+// Update the price tag on a set row header
+function updateSetRowPrice(si) {
+  var el = document.getElementById('set-row-price-' + si);
+  if (!el) return;
+  var sym  = settings.currency || '¥';
+  var upgrade = calcSetUpgrade();
+  if (upgrade != null) {
+    el.textContent = '+' + fmt(upgrade, sym);
+    el.style.color = '#a07800';
+  } else {
+    el.textContent = 'Select options';
+    el.style.color = 'var(--text3)';
+  }
+}
+
 function selectSet(si, setArea) {
   dPickedSet = { idx: si, setItem: dAllSets[si] };
   dChoices   = {};
+  // Reset all row price labels
+  dAllSets.forEach(function(_, i) {
+    var el = document.getElementById('set-row-price-' + i);
+    if (el) { el.textContent = 'Select options'; el.style.color = 'var(--text3)'; }
+  });
   // Update radio dots
   setArea.querySelectorAll('.set-row').forEach(function(r) {
     r.classList.toggle('picked', parseInt(r.dataset.setidx) === si);
@@ -1058,11 +1107,8 @@ function refreshDetailBtn() {
   var missing = groups.filter(function(g) { return !dChoices[g.group_name]; });
   var total   = (dItem ? parseFloat(dItem.price) : 0) + parseFloat(dPickedSet.setItem.price);
 
-  // Use item's own set_price if set, else fall back to set menu price
-  var actualSetPrice = dItem && dItem.set_price != null
-    ? parseFloat(dItem.set_price)
-    : parseFloat(dPickedSet.setItem.price);
-  var total2 = (dItem ? parseFloat(dItem.price) : 0) + actualSetPrice;
+  var upgrade = calcSetUpgrade(); // null until all choices made
+  var total2  = (dItem ? parseFloat(dItem.price) : 0) + (upgrade || 0);
   btn.disabled = missing.length > 0;
   btn.textContent = missing.length > 0
     ? 'Choose your ' + missing[0].group_name
@@ -1085,10 +1131,8 @@ document.getElementById('d-add-btn').addEventListener('click', function() {
   if (!dItem) return;
   var hasSet   = dPickedSet !== null;
   var setItem  = hasSet ? dPickedSet.setItem : null;
-  // Set upgrade price: use item's own set_price if set, else fall back to set menu's price
-  var setPrice = hasSet
-    ? (dItem.set_price != null ? parseFloat(dItem.set_price) : parseFloat(setItem.price))
-    : 0;
+  // Set upgrade = sum of all chosen components' set_price
+  var setPrice = hasSet ? (calcSetUpgrade() || 0) : 0;
   cart.push({
     cartId:    nextCartId++,
     id:        dItem.id,
@@ -1149,13 +1193,15 @@ function renderCart() {
     var setHtml = '';
     if (e.set) {
       var sideLines = Object.entries(e.choices || {}).map(function(kv) {
-        return '<span style="font-weight:700;color:var(--mustard);font-size:.65rem">' + esc(kv[0]) + ':</span> ' + esc(kv[1].emoji + ' ' + kv[1].name);
+        var c   = kv[1];
+        var sp  = c.setPrice != null ? ' +' + fmt(c.setPrice, sym) : '';
+        return '<span style="font-weight:700;color:var(--mustard);font-size:.65rem">' + esc(kv[0]) + ':</span> ' + esc(c.emoji + ' ' + c.name) + '<span style="color:#a07800;font-size:.65rem">' + sp + '</span>';
       }).join('<br>');
-      setHtml = '<span class="ci-set-tag">+ ' + esc(e.set.name_jp || e.set.name) + '</span>';
+      setHtml = '<span class="ci-set-tag">+ ' + esc(e.set.name_jp || e.set.name) + ' ' + fmt(e.setPrice, sym) + '</span>';
       if (sideLines) setHtml += '<div class="ci-set-choices">' + sideLines + '</div>';
     }
     var priceLabel = e.set
-      ? fmt(e.mainPrice, sym) + ' + ' + fmt(e.set.price, sym) + ' set'
+      ? fmt(e.mainPrice, sym) + ' + ' + fmt(e.setPrice, sym) + ' set'
       : fmt(e.mainPrice, sym);
     return '<div class="cart-item">'
       + '<div class="ci-thumb">' + img + '</div>'
