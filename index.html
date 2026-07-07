@@ -951,7 +951,7 @@ async function openDetail(itemId) {
         + '<div class="set-row-name">' + esc(setItem.name_jp || setItem.name) + '</div>'
         + '<div class="set-row-desc">' + esc(setItem.description || '') + '</div>'
         + '</div>'
-        + '<div class="set-row-price">+' + fmt(setItem.price, sym) + '</div>'
+        + '<div class="set-row-price">+' + fmt(dItem && dItem.set_price != null ? dItem.set_price : setItem.price, sym) + '</div>'
         + '</div>'
         // Collapsible choice area (hidden until this set is selected)
         + '<div class="set-choices-inner" id="set-inner-' + si + '">' + groupsHtml + '</div>'
@@ -1058,10 +1058,15 @@ function refreshDetailBtn() {
   var missing = groups.filter(function(g) { return !dChoices[g.group_name]; });
   var total   = (dItem ? parseFloat(dItem.price) : 0) + parseFloat(dPickedSet.setItem.price);
 
+  // Use item's own set_price if set, else fall back to set menu price
+  var actualSetPrice = dItem && dItem.set_price != null
+    ? parseFloat(dItem.set_price)
+    : parseFloat(dPickedSet.setItem.price);
+  var total2 = (dItem ? parseFloat(dItem.price) : 0) + actualSetPrice;
   btn.disabled = missing.length > 0;
   btn.textContent = missing.length > 0
     ? 'Choose your ' + missing[0].group_name
-    : 'Add to Order — ' + fmt(total * dQty, sym);
+    : 'Add to Order — ' + fmt(total2 * dQty, sym);
 }
 
 // Qty buttons in detail
@@ -1078,8 +1083,12 @@ document.getElementById('d-qty-inc').addEventListener('click', function() {
 
 document.getElementById('d-add-btn').addEventListener('click', function() {
   if (!dItem) return;
-  var hasSet  = dPickedSet !== null;
-  var setItem = hasSet ? dPickedSet.setItem : null;
+  var hasSet   = dPickedSet !== null;
+  var setItem  = hasSet ? dPickedSet.setItem : null;
+  // Set upgrade price: use item's own set_price if set, else fall back to set menu's price
+  var setPrice = hasSet
+    ? (dItem.set_price != null ? parseFloat(dItem.set_price) : parseFloat(setItem.price))
+    : 0;
   cart.push({
     cartId:    nextCartId++,
     id:        dItem.id,
@@ -1088,9 +1097,10 @@ document.getElementById('d-add-btn').addEventListener('click', function() {
     emoji:     dItem.emoji || '🍽',
     image_url: dItem.image_url || '',
     mainPrice: parseFloat(dItem.price),
-    price:     parseFloat(dItem.price) + (setItem ? parseFloat(setItem.price) : 0),
+    setPrice:  setPrice,
+    price:     parseFloat(dItem.price) + setPrice,
     qty:       dQty,
-    set:       setItem ? { id: setItem.id, name: setItem.name, name_jp: setItem.name_jp || '', price: parseFloat(setItem.price) } : null,
+    set:       setItem ? { id: setItem.id, name: setItem.name, name_jp: setItem.name_jp || '', price: setPrice } : null,
     choices:   hasSet ? Object.assign({}, dChoices) : {},
   });
   closeDetail();
