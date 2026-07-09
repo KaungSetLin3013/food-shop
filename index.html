@@ -748,7 +748,9 @@ async function loadMenu() {
   var r1 = await sb.from('categories').select('*').order('sort_order');
   var r2 = await sb.from('menu_items').select('*').order('created_at');
   var r3 = await sb.from('set_components')
-    .select('set_id, component_group, component_category_id, sort_order, cat:component_category_id(id,name)')
+    .select('set_id, component_group, component_id, sort_order')
+    .not('component_group', 'is', null)
+    .not('component_id', 'is', null)
     .order('sort_order');
 
   categories = r1.data || [];
@@ -759,14 +761,31 @@ async function loadMenu() {
   items    = allItems.filter(function(i) { return i.is_set === false && i.available === true; });
   setMenus = allItems.filter(function(i) { return i.is_set === true; });
 
+  // Build setGroups: setId -> [ {group_name, items:[{id,name,name_jp,emoji,image_url,set_price}]} ]
+  // Group by set_id + component_group, collect specific items
+  var rawComps = r3.data || [];
+  var compItemIds = rawComps.map(function(c) { return c.component_id; }).filter(Boolean);
+  var compItemsRes = compItemIds.length
+    ? await sb.from('menu_items').select('id,name,name_jp,emoji,image_url,set_price').in('id', compItemIds)
+    : { data: [] };
+  var compItemsMap = {};
+  (compItemsRes.data || []).forEach(function(i) { compItemsMap[i.id] = i; });
+
   setGroups = {};
-  (r3.data || []).forEach(function(sc) {
-    if (!sc.component_group || !sc.component_category_id) return;
-    if (!setGroups[sc.set_id]) setGroups[sc.set_id] = [];
-    setGroups[sc.set_id].push({
-      group_name:  sc.component_group,
-      category_id: sc.component_category_id,
-      cat_name:    sc.cat ? sc.cat.name : '',
+  rawComps.forEach(function(sc) {
+    if (!sc.component_group || !sc.component_id) return;
+    if (!setGroups[sc.set_id]) setGroups[sc.set_id] = {};
+    var groups = setGroups[sc.set_id];
+    if (!groups[sc.component_group]) groups[sc.component_group] = [];
+    var item = compItemsMap[sc.component_id];
+    if (item) groups[sc.component_group].push(item);
+  });
+  // Convert to array format expected by openDetail
+  // setGroups[setId] = [{group_name, items:[...]}]
+  Object.keys(setGroups).forEach(function(sid) {
+    var grouped = setGroups[sid];
+    setGroups[sid] = Object.keys(grouped).map(function(gName) {
+      return { group_name: gName, items: grouped[gName] };
     });
   });
 
@@ -890,7 +909,8 @@ async function openDetail(itemId) {
   // has_set undefined (old rows) → treat as true
   var itemAllowsSet = dItem.has_set !== false;
   dAllSets = itemAllowsSet ? setMenus.filter(function(s) {
-    return s.available && setGroups[s.id] && setGroups[s.id].length > 0;
+    var grps = setGroups[s.id];
+    return s.available && grps && grps.length > 0 && grps.some(function(g) { return g.items && g.items.length > 0; });
   }) : [];
   dPickedSet = null;
   dChoices   = {};
@@ -900,26 +920,14 @@ async function openDetail(itemId) {
   if (!dAllSets.length) {
     setArea.innerHTML = '';
   } else {
-    // Gather all unique category IDs needed across every set
-    var allCatIds = [];
-    dAllSets.forEach(function(s) {
-      setGroups[s.id].forEach(function(g) {
-        if (allCatIds.indexOf(g.category_id) === -1) allCatIds.push(g.category_id);
-      });
-    });
-
     setArea.innerHTML = '<div class="loading-grid" style="padding:16px 0"><div class="spin"></div></div>';
 
-    // Load choice items once for all sets
-    var res = await sb.from('menu_items').select('*')
-      .in('category_id', allCatIds).eq('available', true).eq('is_set', false);
-    var allChoiceItems = res.data || [];
-
     // Build UI: one collapsible section per set, radio to select which set
+    // setGroups[setId] = [{group_name, items:[{id,name,...}]}]
     var sectionsHtml = dAllSets.map(function(setItem, si) {
-      var groups = setGroups[setItem.id];
+      var groups = setGroups[setItem.id] || [];
       var groupsHtml = groups.map(function(g) {
-        var opts = allChoiceItems.filter(function(i) { return i.category_id === g.category_id; });
+        var opts = g.items || [];
         var optsHtml = opts.map(function(opt) {
           var oi = opt.image_url
             ? '<img src="' + esc(opt.image_url) + '" loading="lazy"/>'
