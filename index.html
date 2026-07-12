@@ -743,34 +743,40 @@ document.getElementById('gate-btn').addEventListener('click', function() {
   startPoll();
 });
 
-// ── Load menu ─────────────────────────────────────────────
-async function loadMenu() {
-  var r1 = await sb.from('categories').select('*').order('sort_order');
-  var r2 = await sb.from('menu_items').select('*').order('created_at');
-  var r3 = await sb.from('set_components')
-    .select('set_id, component_group, component_id, sort_order')
-    .not('component_group', 'is', null)
-    .not('component_id', 'is', null)
-    .order('sort_order');
+// ── Offline cache helpers ──────────────────────────────────
+var CACHE_KEY = 'festival_menu_cache';
 
-  categories = r1.data || [];
-  var allItems = r2.data || [];
-  // is_set=true  → set menu definition, never shown in main customer grid
-  // available=false → hidden from customer menu entirely
-  // has_set=false/true → ONLY controls whether set upsell appears, never hides the item
+function saveMenuCache(data) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data: data })); } catch(e) {}
+}
+
+function loadMenuCache() {
+  try {
+    var raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function showOfflineBanner(stale) {
+  var existing = document.getElementById('offline-banner');
+  if (existing) return;
+  var el = document.createElement('div');
+  el.id = 'offline-banner';
+  el.style.cssText = 'position:fixed;top:56px;left:0;right:0;z-index:300;background:#f97316;color:#fff;text-align:center;padding:8px 16px;font-size:.82rem;font-weight:800;display:flex;align-items:center;justify-content:center;gap:10px';
+  el.innerHTML = stale
+    ? '📴 Offline — showing saved menu (may be outdated) <button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,.25);border:none;border-radius:6px;padding:2px 8px;color:#fff;cursor:pointer;font-weight:800;font-family:inherit">✕</button>'
+    : '📶 Back online — menu updated ✓';
+  document.body.appendChild(el);
+  if (!stale) setTimeout(function() { el && el.remove(); }, 3000);
+}
+
+function applyMenuData(data) {
+  categories = data.categories || [];
+  var allItems = data.allItems || [];
   items    = allItems.filter(function(i) { return i.is_set === false && i.available === true; });
   setMenus = allItems.filter(function(i) { return i.is_set === true; });
-
-  // Build setGroups: setId -> [ {group_name, items:[{id,name,name_jp,emoji,image_url,set_price}]} ]
-  // Group by set_id + component_group, collect specific items
-  var rawComps = r3.data || [];
-  var compItemIds = rawComps.map(function(c) { return c.component_id; }).filter(Boolean);
-  var compItemsRes = compItemIds.length
-    ? await sb.from('menu_items').select('id,name,name_jp,emoji,image_url,set_price').in('id', compItemIds)
-    : { data: [] };
-  var compItemsMap = {};
-  (compItemsRes.data || []).forEach(function(i) { compItemsMap[i.id] = i; });
-
+  var rawComps    = data.rawComps || [];
+  var compItemsMap= data.compItemsMap || {};
   setGroups = {};
   rawComps.forEach(function(sc) {
     if (!sc.component_group || !sc.component_id) return;
@@ -780,18 +786,93 @@ async function loadMenu() {
     var item = compItemsMap[sc.component_id];
     if (item) groups[sc.component_group].push(item);
   });
-  // Convert to array format expected by openDetail
-  // setGroups[setId] = [{group_name, items:[...]}]
   Object.keys(setGroups).forEach(function(sid) {
     var grouped = setGroups[sid];
     setGroups[sid] = Object.keys(grouped).map(function(gName) {
       return { group_name: gName, items: grouped[gName] };
     });
   });
-
-  renderSidebar();
-  renderGrid('all');
 }
+
+// ── Load menu ─────────────────────────────────────────────
+async function loadMenu() {
+  var isOnline = navigator.onLine;
+
+  if (!isOnline) {
+    // Offline — try to use cache
+    var cached = loadMenuCache();
+    if (cached) {
+      applyMenuData(cached.data);
+      renderSidebar();
+      renderGrid('all');
+      showOfflineBanner(true);
+    } else {
+      document.getElementById('item-grid-wrap').innerHTML =
+        '<div class="loading-grid" style="flex-direction:column;gap:12px;color:var(--text3)">'
+        + '<span style="font-size:2.5rem">📴</span>'
+        + '<span style="font-weight:800">You are offline</span>'
+        + '<span style="font-size:.82rem;opacity:.7">No saved menu found.<br>Please connect to WiFi and refresh.</span>'
+        + '</div>';
+    }
+    return;
+  }
+
+  try {
+    var r1 = await sb.from('categories').select('*').order('sort_order');
+    var r2 = await sb.from('menu_items').select('*').order('created_at');
+    var r3 = await sb.from('set_components')
+      .select('set_id, component_group, component_id, sort_order')
+      .not('component_group', 'is', null)
+      .not('component_id', 'is', null)
+      .order('sort_order');
+
+    var allItems    = r2.data || [];
+    var rawComps    = r3.data || [];
+    var compItemIds = rawComps.map(function(c) { return c.component_id; }).filter(Boolean);
+    var compItemsRes = compItemIds.length
+      ? await sb.from('menu_items').select('id,name,name_jp,emoji,image_url,set_price').in('id', compItemIds)
+      : { data: [] };
+    var compItemsMap = {};
+    (compItemsRes.data || []).forEach(function(i) { compItemsMap[i.id] = i; });
+
+    var cacheData = {
+      categories:   r1.data || [],
+      allItems:     allItems,
+      rawComps:     rawComps,
+      compItemsMap: compItemsMap,
+    };
+    applyMenuData(cacheData);
+    saveMenuCache(cacheData);
+    renderSidebar();
+    renderGrid('all');
+  } catch(err) {
+    // Network error — fall back to cache
+    var cached = loadMenuCache();
+    if (cached) {
+      applyMenuData(cached.data);
+      renderSidebar();
+      renderGrid('all');
+      showOfflineBanner(true);
+    } else {
+      document.getElementById('item-grid-wrap').innerHTML =
+        '<div class="loading-grid" style="flex-direction:column;gap:12px;color:var(--text3)">'
+        + '<span style="font-size:2.5rem">⚠️</span>'
+        + '<span style="font-weight:800">Could not load menu</span>'
+        + '<span style="font-size:.82rem;opacity:.7">Check your connection and refresh.</span>'
+        + '</div>';
+    }
+  }
+}
+
+// Listen for network changes
+window.addEventListener('online', function() {
+  document.getElementById('offline-banner') && document.getElementById('offline-banner').remove();
+  showOfflineBanner(false);
+  loadMenu(); // reload fresh data when back online
+});
+window.addEventListener('offline', function() {
+  showOfflineBanner(true);
+});
 
 // ── Category sidebar ──────────────────────────────────────
 function renderSidebar() {
