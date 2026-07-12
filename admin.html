@@ -22,12 +22,12 @@ input,select,textarea{font-family:inherit}
 
 /* PIN GATE */
 #pw-gate{position:fixed;inset:0;background:var(--navy);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px}
-#pw-gate::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 40%,rgba(245,200,66,.08),transparent 65%)}
+#pw-gate::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 40%,rgba(245,200,66,.08),transparent 65%);pointer-events:none;z-index:0}
 .pw-box{position:relative;z-index:1;text-align:center;max-width:320px;width:100%}
 .pw-icon{font-size:3rem;margin-bottom:14px;display:block}
 .pw-title{font-family:'Fredoka',sans-serif;font-size:1.9rem;font-weight:700;color:var(--mustard);margin-bottom:6px}
 .pw-sub{color:var(--text3);font-size:.85rem;margin-bottom:28px}
-.pw-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r3);padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.pw-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r3);padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.4);position:relative;z-index:2}
 
 /* PIN dots display */
 .pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px;height:22px}
@@ -42,6 +42,7 @@ input,select,textarea{font-family:inherit}
   font-family:'Fredoka',sans-serif;font-size:1.5rem;font-weight:600;color:#fff;
   cursor:pointer;transition:all .12s;user-select:none;
   -webkit-tap-highlight-color:transparent;
+  position:relative;z-index:3;pointer-events:all;
 }
 .pin-key:hover,.pin-key:active{background:var(--mustard);color:var(--navy);transform:scale(.96)}
 .pin-key.del{font-size:1rem;color:var(--text3)}
@@ -389,7 +390,7 @@ let authed     = false;
 settings = await getSettings();
 applySettings();
 
-document.getElementById('pw-in').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('pw-btn').click(); });
+// PIN pad — keyboard input handled by document keydown listener below
 async function hashPw(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
