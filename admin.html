@@ -20,20 +20,38 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 button{cursor:pointer;font-family:inherit;border:none}
 input,select,textarea{font-family:inherit}
 
-/* PASSWORD GATE */
+/* PIN GATE */
 #pw-gate{position:fixed;inset:0;background:var(--navy);z-index:900;display:flex;align-items:center;justify-content:center;padding:20px}
 #pw-gate::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 40%,rgba(245,200,66,.08),transparent 65%)}
-.pw-box{position:relative;z-index:1;text-align:center;max-width:360px;width:100%}
+.pw-box{position:relative;z-index:1;text-align:center;max-width:320px;width:100%}
 .pw-icon{font-size:3rem;margin-bottom:14px;display:block}
 .pw-title{font-family:'Fredoka',sans-serif;font-size:1.9rem;font-weight:700;color:var(--mustard);margin-bottom:6px}
 .pw-sub{color:var(--text3);font-size:.85rem;margin-bottom:28px}
-.pw-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r3);padding:28px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
-.pw-label{font-size:.75rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:9px;text-align:left}
-.pw-input{width:100%;padding:13px 16px;border:2px solid var(--border);border-radius:var(--r);background:var(--navy3);color:#fff;font-size:1rem;text-align:center;letter-spacing:.12em;transition:border-color .15s}
-.pw-input:focus{outline:none;border-color:var(--mustard);box-shadow:0 0 0 3px rgba(245,200,66,.12)}
-.pw-btn{width:100%;margin-top:14px;background:linear-gradient(135deg,var(--mustard),#e6b800);color:var(--navy);border-radius:var(--r);padding:13px;font-size:1rem;font-weight:900;font-family:'Fredoka',sans-serif;box-shadow:0 4px 14px rgba(245,200,66,.35);transition:all .15s}
-.pw-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(245,200,66,.45)}
-.pw-err{color:var(--coral);font-size:.8rem;font-weight:700;margin-top:8px;min-height:18px}
+.pw-card{background:var(--navy2);border:1px solid var(--border);border-radius:var(--r3);padding:24px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+
+/* PIN dots display */
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px;height:22px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--text3);background:transparent;transition:all .15s}
+.pin-dot.filled{background:var(--mustard);border-color:var(--mustard);transform:scale(1.15)}
+
+/* PIN pad grid */
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.pin-key{
+  background:var(--navy3);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px 0;
+  font-family:'Fredoka',sans-serif;font-size:1.5rem;font-weight:600;color:#fff;
+  cursor:pointer;transition:all .12s;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.pin-key:hover,.pin-key:active{background:var(--mustard);color:var(--navy);transform:scale(.96)}
+.pin-key.del{font-size:1rem;color:var(--text3)}
+.pin-key.del:hover,.pin-key.del:active{background:rgba(255,107,91,.2);color:var(--coral)}
+.pin-key.empty{background:transparent;border-color:transparent;pointer-events:none}
+.pin-key.go{background:linear-gradient(135deg,var(--mustard),#e6b800);color:var(--navy);font-size:1rem;font-weight:900}
+.pin-key.go:hover{background:linear-gradient(135deg,#ffd700,#e6b800)}
+.pin-shake{animation:pinShake .4s ease}
+@keyframes pinShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+.pw-err{color:var(--coral);font-size:.8rem;font-weight:700;margin-top:12px;min-height:18px;text-align:center}
 
 /* HEADER */
 .hdr{background:rgba(27,35,64,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:12px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;gap:10px;flex-wrap:wrap}
@@ -190,16 +208,35 @@ input,select,textarea{font-family:inherit}
 </head>
 <body>
 
-<!-- PASSWORD GATE -->
+<!-- PIN GATE -->
 <div id="pw-gate">
   <div class="pw-box">
     <span class="pw-icon">🔐</span>
     <div class="pw-title">Admin Panel</div>
-    <p class="pw-sub">Staff access only</p>
+    <p class="pw-sub">Enter your 4-digit PIN</p>
     <div class="pw-card">
-      <label class="pw-label" for="pw-in">Password</label>
-      <input class="pw-input" type="password" id="pw-in" placeholder="••••••••" autocomplete="current-password"/>
-      <button class="pw-btn" id="pw-btn">Unlock →</button>
+      <!-- PIN dot display -->
+      <div class="pin-dots" id="pin-dots">
+        <div class="pin-dot" id="pd0"></div>
+        <div class="pin-dot" id="pd1"></div>
+        <div class="pin-dot" id="pd2"></div>
+        <div class="pin-dot" id="pd3"></div>
+      </div>
+      <!-- PIN pad -->
+      <div class="pin-pad">
+        <button class="pin-key" data-d="1">1</button>
+        <button class="pin-key" data-d="2">2</button>
+        <button class="pin-key" data-d="3">3</button>
+        <button class="pin-key" data-d="4">4</button>
+        <button class="pin-key" data-d="5">5</button>
+        <button class="pin-key" data-d="6">6</button>
+        <button class="pin-key" data-d="7">7</button>
+        <button class="pin-key" data-d="8">8</button>
+        <button class="pin-key" data-d="9">9</button>
+        <button class="pin-key empty"></button>
+        <button class="pin-key" data-d="0">0</button>
+        <button class="pin-key del" id="pin-del">⌫</button>
+      </div>
       <div class="pw-err" id="pw-err"></div>
     </div>
   </div>
@@ -323,7 +360,7 @@ input,select,textarea{font-family:inherit}
           <div class="fld"><label>Currency Symbol</label><input id="s-cur" placeholder="¥" maxlength="4"/></div>
           <div class="fld"><label>Tax / Service (%)</label><input id="s-tax" type="number" min="0" max="100" step="0.1" placeholder="0"/></div>
           <div class="fld"><label>Receipt Message</label><input id="s-rcpt" placeholder="Thank you!"/></div>
-          <div class="fld"><label>Admin Password</label><input id="s-pw" type="password" placeholder="New password"/></div>
+          <div class="fld"><label>Admin PIN <span style="font-size:.72rem;color:var(--text3);font-weight:600">(4 digits — leave blank to keep current)</span></label><input id="s-pw" type="number" placeholder="e.g. 1234" min="0" max="9999"/></div>
         </div>
         <button class="btn btn-primary" style="margin-top:16px" onclick="saveSettings()">💾 Save Settings</button>
       </div>
@@ -353,17 +390,76 @@ settings = await getSettings();
 applySettings();
 
 document.getElementById('pw-in').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('pw-btn').click(); });
-document.getElementById('pw-btn').addEventListener('click', () => {
-  const val = document.getElementById('pw-in').value;
-  if (val === (settings.admin_password || 'admin1234')) {
+async function hashPw(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── PIN pad logic ──────────────────────────────────────────
+var pinValue = '';
+const PIN_LEN = 4;
+
+function updatePinDots() {
+  for (var i = 0; i < PIN_LEN; i++) {
+    var dot = document.getElementById('pd' + i);
+    if (dot) dot.classList.toggle('filled', i < pinValue.length);
+  }
+}
+
+async function submitPin() {
+  const stored       = settings.admin_password || '1234';
+  const hashed       = await hashPw(pinValue);
+  const storedHashed = stored.length === 64 ? stored : await hashPw(stored);
+  if (hashed === storedHashed) {
     authed = true;
-    document.getElementById('pw-gate').style.display    = 'none';
-    document.getElementById('admin-app').style.display  = 'block';
+    document.getElementById('pw-gate').style.display   = 'none';
+    document.getElementById('admin-app').style.display = 'block';
+    pinValue = '';
+    updatePinDots();
     boot();
   } else {
-    document.getElementById('pw-err').textContent = '❌ Incorrect password';
-    document.getElementById('pw-in').value = '';
-    document.getElementById('pw-in').focus();
+    // Shake animation + error
+    document.getElementById('pin-dots').classList.add('pin-shake');
+    document.getElementById('pw-err').textContent = '❌ Incorrect PIN';
+    setTimeout(function() {
+      document.getElementById('pin-dots').classList.remove('pin-shake');
+    }, 400);
+    pinValue = '';
+    updatePinDots();
+  }
+}
+
+document.querySelectorAll('.pin-key[data-d]').forEach(function(btn) {
+  btn.addEventListener('click', async function() {
+    if (pinValue.length >= PIN_LEN) return;
+    document.getElementById('pw-err').textContent = '';
+    pinValue += btn.dataset.d;
+    updatePinDots();
+    // Auto-submit when 4 digits entered
+    if (pinValue.length === PIN_LEN) {
+      await submitPin();
+    }
+  });
+});
+
+document.getElementById('pin-del').addEventListener('click', function() {
+  pinValue = pinValue.slice(0, -1);
+  document.getElementById('pw-err').textContent = '';
+  updatePinDots();
+});
+
+// Physical keyboard support
+document.addEventListener('keydown', async function(e) {
+  if (authed) return;
+  if (e.key >= '0' && e.key <= '9' && pinValue.length < PIN_LEN) {
+    document.getElementById('pw-err').textContent = '';
+    pinValue += e.key;
+    updatePinDots();
+    if (pinValue.length === PIN_LEN) await submitPin();
+  } else if (e.key === 'Backspace') {
+    pinValue = pinValue.slice(0, -1);
+    document.getElementById('pw-err').textContent = '';
+    updatePinDots();
   }
 });
 
@@ -575,6 +671,12 @@ window.openCheckout = async function(tableNum) {
         <button class="btn btn-ghost" onclick="printReceipt('${tableNum}')">🖨 Print Receipt</button>
         <button class="btn btn-checkout" style="flex:1" onclick="completeCheckout('${tableNum}',${Math.round(total)},this)">
           ✅ Complete Checkout — ${fmt(Math.round(total),sym)}
+        </button>
+      </div>
+      <div style="margin-top:8px" class="no-print">
+        <button class="btn btn-ghost btn-sm" style="width:100%;opacity:.6;font-size:.78rem"
+          onclick="reopenTable('${tableNum}')" title="Undo checkout — re-opens table for more orders">
+          ↩ Reopen Table (undo checkout)
         </button>
       </div>
     </div>
@@ -1127,8 +1229,11 @@ window.saveSettings=async function() {
     tax:       document.getElementById('s-tax').value||'0',
     receipt_msg:document.getElementById('s-rcpt').value.trim(),
   };
-  const newPw=document.getElementById('s-pw').value.trim();
-  if (newPw) updates.admin_password=newPw;
+  const newPwRaw = document.getElementById('s-pw').value.trim();
+  if (newPwRaw) {
+    if (!/^\d{4}$/.test(newPwRaw)) { toast('PIN must be exactly 4 digits', 'error'); return; }
+    updates.admin_password = await hashPw(newPwRaw);
+  }
 
   for (const [k,v] of Object.entries(updates)) await saveSetting(k,v);
   settings={...settings,...updates};
