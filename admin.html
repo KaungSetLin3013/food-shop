@@ -408,10 +408,15 @@ function updatePinDots() {
 }
 
 async function submitPin() {
-  const stored       = settings.admin_password || '1234';
-  const hashed       = await hashPw(pinValue);
+  const stored = (settings && settings.admin_password) || '1234';
+  const hashed = await hashPw(pinValue);
+  // Three ways to match:
+  // 1. stored is a SHA-256 hash (64 hex chars) → compare hashes
+  // 2. stored is plaintext PIN → compare directly
+  // 3. fallback default '1234'
   const storedHashed = stored.length === 64 ? stored : await hashPw(stored);
-  if (hashed === storedHashed) {
+  const match = (hashed === storedHashed) || (pinValue === stored);
+  if (match) {
     authed = true;
     document.getElementById('pw-gate').style.display   = 'none';
     document.getElementById('admin-app').style.display = 'block';
@@ -419,9 +424,8 @@ async function submitPin() {
     updatePinDots();
     boot();
   } else {
-    // Shake animation + error
     document.getElementById('pin-dots').classList.add('pin-shake');
-    document.getElementById('pw-err').textContent = '❌ Incorrect PIN';
+    document.getElementById('pw-err').textContent = '❌ Wrong PIN — try again';
     setTimeout(function() {
       document.getElementById('pin-dots').classList.remove('pin-shake');
     }, 400);
