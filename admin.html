@@ -175,9 +175,9 @@ input,select,textarea{font-family:inherit}
 .tc-status{font-size:.7rem;font-weight:800;margin-top:4px}
 
 /* RECEIPT (print) */
-@media print {
-  body > *:not(#receipt-modal){ display:none!important }
-  #receipt-modal{ display:block!important; position:static!important; background:#fff!important }
+@media print{
+  .no-print{display:none!important}
+}
   .receipt-box{ box-shadow:none!important; max-width:100%!important; border:none!important }
   .no-print{ display:none!important }
 }
@@ -723,29 +723,63 @@ function buildReceiptHTML(tableNum, items, subtotal, tax, total, forPrint) {
 }
 
 window.printReceipt = async function(tableNum) {
-  const sym = settings.currency||'¥';
+  const sym = settings.currency || '¥';
   const {data:allOrders} = await sb.from('orders')
     .select('*, order_items(*, order_item_components(component_name,component_emoji))')
-    .eq('table_num',tableNum).eq('checked_out',false).neq('status','cancelled');
+    .eq('table_num', tableNum).eq('checked_out', false).neq('status', 'cancelled');
 
-  const allItems=[];
-  (allOrders||[]).forEach(o=>(o.order_items||[]).forEach(oi=>{
-    allItems.push({name:oi.item_name_jp||oi.item_name,emoji:oi.item_emoji||'🍽',qty:oi.quantity,price:oi.unit_price,comps:(oi.order_item_components||[]).map(c=>c.component_emoji+' '+c.component_name)});
+  const allItems = [];
+  (allOrders || []).forEach(o => (o.order_items || []).forEach(oi => {
+    allItems.push({
+      name:  oi.item_name_jp || oi.item_name,
+      emoji: oi.item_emoji || '🍽',
+      qty:   oi.quantity,
+      price: oi.unit_price,
+      comps: (oi.order_item_components || []).map(c => c.component_emoji + ' ' + c.component_name),
+    });
   }));
-  const sub=allOrders.reduce((s,o)=>s+Number(o.total),0);
-  const tax=sub*(parseFloat(settings.tax||0)/100);
+  const sub   = (allOrders || []).reduce((s, o) => s + Number(o.total), 0);
+  const tax   = sub * (parseFloat(settings.tax || 0) / 100);
+  const total = sub + tax;
 
-  const modal=document.getElementById('receipt-modal');
-  document.getElementById('receipt-content').innerHTML = buildReceiptHTML(tableNum,allItems,sub,tax,sub+tax,true);
-  modal.style.display='flex';
+  const receiptHTML = buildReceiptHTML(tableNum, allItems, sub, tax, total, true);
 
-  const printBtn=document.createElement('div');
-  printBtn.style.cssText='margin-top:16px;display:flex;gap:10px;justify-content:center';
-  printBtn.innerHTML=`
-    <button onclick="window.print()" style="background:var(--mustard);color:var(--navy);border:none;border-radius:8px;padding:10px 22px;font-weight:900;font-size:.9rem;cursor:pointer;font-family:'Fredoka',sans-serif">🖨 Print</button>
-    <button onclick="document.getElementById('receipt-modal').style.display='none'" style="background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:'Nunito',sans-serif">Close</button>
-  `;
-  document.getElementById('receipt-content').appendChild(printBtn);
+  // Show preview modal
+  const modal   = document.getElementById('receipt-modal');
+  const content = document.getElementById('receipt-content');
+  content.innerHTML = receiptHTML +
+    `<div style="margin-top:16px;display:flex;gap:10px;justify-content:center;padding-bottom:8px" class="no-print">
+      <button onclick="doPrint()" style="background:var(--mustard);color:var(--navy);border:none;border-radius:8px;padding:10px 22px;font-weight:900;font-size:.9rem;cursor:pointer;font-family:'Fredoka',sans-serif">🖨 Print</button>
+      <button onclick="document.getElementById('receipt-modal').style.display='none'" style="background:rgba(255,255,255,.1);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:700;font-size:.9rem;cursor:pointer;font-family:'Nunito',sans-serif">Close</button>
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+// Open a clean print window instead of printing the whole page
+window.doPrint = function() {
+  const sym     = settings.currency || '¥';
+  const content = document.getElementById('receipt-content').innerHTML;
+  const win     = window.open('', '_blank', 'width=400,height=600');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+    <title>Receipt</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:'Courier New',monospace;font-size:13px;color:#000;background:#fff;padding:16px;max-width:320px;margin:0 auto}
+      .rcpt-center{text-align:center;margin-bottom:8px}
+      .rcpt-shop{font-size:1.1rem;font-weight:900;letter-spacing:.04em}
+      .rcpt-tag{font-size:.8rem;color:#555;margin-top:2px}
+      .rcpt-divider{border:none;border-top:1px dashed #999;margin:8px 0}
+      .rcpt-row{display:flex;justify-content:space-between;margin:3px 0;font-size:.82rem}
+      .rcpt-row.bold{font-weight:700}
+      .rcpt-row.total{font-size:.95rem;font-weight:900;margin-top:4px}
+      .rcpt-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#666;margin:6px 0 3px}
+      .rcpt-footer{text-align:center;font-size:.78rem;color:#555;margin-top:8px}
+      .no-print{display:none}
+    </style>
+  </head><body>${content}</body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(function() { win.print(); win.close(); }, 400);
 }
 
 window.completeCheckout = async function(tableNum, total, btn) {
