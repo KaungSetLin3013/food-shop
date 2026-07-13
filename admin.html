@@ -828,6 +828,15 @@ window.doPrint = function(tableNum, allItems, sub, tax, total) {
   };
 }
 
+window.reopenTable = async function(tableNum) {
+  if (!confirm('Reopen table ' + tableNum + '? Orders will reappear in My Orders.')) return;
+  const {data:ords} = await sb.from('orders').select('id').eq('table_num', tableNum).eq('checked_out', true);
+  if (!ords?.length) { toast('No checked-out orders found', 'warning'); return; }
+  await sb.from('orders').update({ checked_out: false, status: 'done' }).in('id', ords.map(o => o.id));
+  await renderCheckout();
+  toast('Table ' + tableNum + ' reopened ↩', 'success');
+};
+
 window.completeCheckout = async function(tableNum, total, btn) {
   btn.disabled=true; btn.textContent='Processing…';
   const {data:ords} = await sb.from('orders').select('id').eq('table_num',tableNum).eq('checked_out',false);
